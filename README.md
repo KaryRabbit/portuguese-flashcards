@@ -2,6 +2,16 @@
 
 A modern, lightweight flashcard application for learning European Portuguese, built with React, TypeScript, and Vite.
 
+## Screenshots
+
+### Study Mode
+![Study Mode - Card View](docs/screenshots/study-mode.png)
+*Interactive flashcard study with audio pronunciation*
+
+### Manage Mode
+![Manage Mode - Card List](docs/screenshots/manage-mode.png)
+*Card management with search, filter, and import/export*
+
 ## Features
 
 - **Study Mode**: Interactive flashcard practice with EN↔PT translation support
