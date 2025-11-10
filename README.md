@@ -1,73 +1,173 @@
-# React + TypeScript + Vite
+# Portuguese Flashcards App
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A modern, lightweight flashcard application for learning European Portuguese, built with React, TypeScript, and Vite.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Study Mode**: Interactive flashcard practice with EN↔PT translation support
+- **Audio Pronunciation**: Built-in text-to-speech for both English and Portuguese
+- **Smart Session Management**: Persist study sessions across browser refreshes
+- **Card Management**: Add, edit, search, filter, and organize flashcards
+- **Rich Card Types**: Support for nouns, verbs (regular/irregular), adjectives, expressions, and more
+- **Examples & Conjugations**: Store example sentences and verb conjugations
+- **Import/Export**: Import from CSV/JSON and export to CSV
+- **Pagination & Sorting**: Efficient table with TanStack Table
+- **Local Storage**: All data stored locally in browser (no backend required)
+- **Single-File Build**: Compiles to a single HTML file for easy distribution
 
-## React Compiler
+## Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **React 19** - UI library
+- **TypeScript** - Type safety
+- **Vite 7** - Build tool & dev server
+- **TanStack Table** - Table management
+- **vite-plugin-singlefile** - Single HTML output
 
-## Expanding the ESLint configuration
+## Project Structure
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```plaintext
+src/
+├── components/
+│   ├── StudyMode.tsx       # Study interface with card flipping
+│   ├── ManageMode.tsx      # Card management & import/export
+│   └── CardTable.tsx       # Sortable, paginated table
+├── hooks/
+│   ├── useFlashcards.ts    # Card CRUD operations
+│   └── useSession.ts       # Study session state
+├── utils/
+│   ├── storage.ts          # localStorage helpers
+│   ├── debounce.ts         # Performance optimization
+│   └── speech.ts           # Text-to-speech audio
+├── flashcard-types.ts      # TypeScript types
+├── App.tsx                 # Main app component
+├── main.tsx                # Entry point
+└── index.css               # Global styles
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Getting Started
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### Installation
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
 ```
+
+### Development
+
+```bash
+npm run dev
+```
+
+Opens at `http://localhost:5173`
+
+### Build
+
+```bash
+npm run build
+```
+
+Creates a single `dist/index.html` file (270KB gzipped to ~82KB)
+
+### Preview Production Build
+
+```bash
+npm run preview
+```
+
+## Usage
+
+### Adding Cards
+
+1. Click **Manage** tab
+2. Fill in English & Portuguese (EU) translations
+3. Select word type (noun, verb, etc.)
+4. Optionally add examples: `English sentence | Portuguese sentence`
+5. Click **Add**
+
+### Studying
+
+1. Select cards using checkboxes in Manage mode
+2. Click **Start session (selected)** or **Start session (all)**
+3. Click **Study** tab
+4. Click cards to flip between languages
+5. Use **Next/Back** buttons to navigate
+6. Toggle **EN → PT** or **PT → EN** mode
+
+### Import/Export
+
+**Import** supports:
+
+- CSV: `english,portuguese,type,example_en,example_pt`
+- JSON: Full card objects with examples & conjugations
+
+**Export** creates CSV with all card data
+
+### Search & Filter
+
+- Search by English/Portuguese text or examples
+- Filter by word type (noun, verb, adjective, etc.)
+- Show only selected cards
+
+## Performance Optimizations
+
+- **Debounced Saves**: localStorage writes batched to reduce I/O (500ms)
+- **Memoized Filtering**: Efficient search/filter with React.useMemo
+- **Code Splitting**: Components separated for better tree-shaking
+- **Single File Build**: No network requests after initial load
+
+## Data Storage
+
+All data stored in `localStorage`:
+
+| Key | Purpose |
+|-----|---------|
+| `flashcards-min-v1` | Card collection |
+| `flashcards-session-v1` | Active study session |
+| `flashcards-selected-v1` | Selected card IDs |
+| `flashcards-page-size` | Table pagination preference |
+
+## Card Schema
+
+```typescript
+interface Card {
+  id: string;
+  front: string;                    // English
+  back: string;                     // Portuguese (EU)
+  type?: WordType;                  // noun, verb-regular, etc.
+  examples?: ExamplePair[];         // Bilingual examples
+  conjugations?: Conjugations;      // Verb conjugations
+  createdAt?: number;               // Timestamp
+}
+```
+
+## Browser Support
+
+Modern browsers with ES2020+ support:
+
+- Chrome/Edge 80+
+- Firefox 75+
+- Safari 13.1+
+
+## Audio Pronunciation
+
+Uses the Web Speech API for text-to-speech:
+
+- Free and built into browsers
+- Works offline after initial page load
+- Supports European Portuguese (pt-PT) and English (en-US)
+
+## Development
+
+### Type Checking
+
+```bash
+npx tsc --noEmit
+```
+
+### Linting
+
+```bash
+npm run lint
+```
+
+Made with ❤️ for Portuguese learners
