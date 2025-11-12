@@ -207,6 +207,7 @@ export function App() {
           onPrev={handlePrev}
           onNext={handleNext}
           onStop={handleStop}
+          onShuffle={() => regenerateSession(true)}
         />
       )}
 

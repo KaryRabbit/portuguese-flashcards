@@ -1,4 +1,4 @@
-import { Volume2 } from 'lucide-react';
+import { Shuffle, Volume2 } from 'lucide-react';
 import React from 'react';
 import type { Card } from '../flashcard-types';
 import { isSpeechSupported, speak } from '../utils/speech';
@@ -16,6 +16,7 @@ interface StudyModeProps {
   onPrev: () => void;
   onNext: () => void;
   onStop: () => void;
+  onShuffle: () => void;
 }
 
 export function StudyMode({
@@ -31,6 +32,7 @@ export function StudyMode({
   onPrev,
   onNext,
   onStop,
+  onShuffle,
 }: StudyModeProps) {
   const frontText = active
     ? direction === 'en-pt'
@@ -299,9 +301,24 @@ export function StudyMode({
             </div>
           )}
 
-          <div style={{ display: 'flex', justifyContent: 'center', gap: 12 }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              gap: 12,
+              flexWrap: 'wrap',
+            }}
+          >
             <button type="button" className="btn" onClick={onPrev}>
               Back
+            </button>
+            <button
+              type="button"
+              className="btn"
+              onClick={onShuffle}
+              title="Shuffle cards in current session"
+            >
+              <Shuffle size={18} />
             </button>
             <button type="button" className="btn" onClick={onStop}>
               Stop
