@@ -17,6 +17,9 @@ interface StudyModeProps {
   onNext: () => void;
   onStop: () => void;
   onShuffle: () => void;
+  onInput: (value: number | null) => void;
+  onGoto: () => void;
+  gotoIndex: number | null;
 }
 
 export function StudyMode({
@@ -31,6 +34,9 @@ export function StudyMode({
   onToggleBack,
   onPrev,
   onNext,
+  onInput,
+  onGoto,
+  gotoIndex,
   onStop,
   onShuffle,
 }: StudyModeProps) {
@@ -326,6 +332,23 @@ export function StudyMode({
             <button type="button" className="btn" onClick={onNext}>
               Next
             </button>
+
+            <div className="jump">
+              <span className="muted">Jump to: </span>
+              <input
+                type="number"
+                value={gotoIndex ?? ''}
+                className="input"
+                min={1}
+                max={sessionLength}
+                placeholder="#"
+                disabled={sessionLength === 0}
+                onChange={(e) =>
+                  onInput(e.target.value ? Number(e.target.value) : null)
+                }
+                onKeyDown={(e) => e.key === 'Enter' && onGoto()}
+              />
+            </div>
           </div>
         </>
       ) : (

@@ -202,3 +202,18 @@ body {
   border: 6px solid transparent;
   border-top-color: #1f2937;
 }
+
+/* Jump input */
+
+.jump {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.jump span {
+  color: #9ca3af;
+  font-size: 0.8em;
+  width: 6rem;
+}

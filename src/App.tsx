@@ -11,6 +11,7 @@ export function App() {
   const [mode, setMode] = useState<'study' | 'manage'>('study');
   const [direction, setDirection] = useState<'en-pt' | 'pt-en'>('en-pt');
   const [hasImported, setHasImported] = useState(false);
+  const [gotoIndex, setGotoIndex] = useState<number | null>(null);
 
   const { cards, addCard, removeCard, importCards, clearAll } = useFlashcards();
 
@@ -30,6 +31,7 @@ export function App() {
     prev,
     reset,
     setSession,
+    goTo,
   } = useSession(cards, hasImported);
 
   const isActiveSelected = active ? selectedIds.has(active.id) : false;
@@ -107,6 +109,15 @@ export function App() {
   const handleStop = () => {
     setMode('manage');
     reset();
+  };
+
+  const handleGoto = () => {
+    if (gotoIndex === null) return;
+
+    const target = Math.max(0, Math.min(gotoIndex - 1, session.length - 1));
+
+    goTo(target);
+    setGotoIndex(null);
   };
 
   const handlePrev = () => {
@@ -207,6 +218,9 @@ export function App() {
           onPrev={handlePrev}
           onNext={handleNext}
           onStop={handleStop}
+          gotoIndex={gotoIndex}
+          onInput={setGotoIndex}
+          onGoto={handleGoto}
           onShuffle={() => regenerateSession(true)}
         />
       )}

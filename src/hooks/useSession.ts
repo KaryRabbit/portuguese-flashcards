@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { Card } from '../flashcard-types';
-import { load, SESSION_KEY, SELECTED_KEY, shuffle } from '../utils/storage';
+import { load, SELECTED_KEY, SESSION_KEY, shuffle } from '../utils/storage';
 
 export function useSession(cards: Card[], hasImported: boolean) {
   const [session, setSession] = useState<Card[]>([]);
@@ -90,44 +90,56 @@ export function useSession(cards: Card[], hasImported: boolean) {
     );
   }, [cards]);
 
-  const toggleSelect = useCallback((id: string) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
+  const toggleSelect = useCallback(
+    (id: string) => {
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        if (next.has(id)) {
+          next.delete(id);
+        } else {
+          next.add(id);
+        }
+        return next;
+      });
+
+      setSession((prevSession) => {
+        const card = cards.find((c) => c.id === id);
+        if (!card) return prevSession;
+
+        const exists = prevSession.some((c) => c.id === id);
+        if (exists) {
+          return prevSession.filter((c) => c.id !== id);
+        } else {
+          return [...prevSession, card];
+        }
+      });
+    },
+    [cards]
+  );
+
+  const regenerateSession = useCallback(
+    (preserveSelection = true) => {
+      const useSelected = selectedIds.size > 0;
+      const base = useSelected
+        ? cards.filter((c) => selectedIds.has(c.id))
+        : cards;
+
+      setSession(shuffle(base));
+      if (!preserveSelection && base.length) {
+        setSelectedIds(new Set(base.map((c) => c.id)));
       }
-      return next;
-    });
+      setIdx(0);
+      setShowBack(false);
+      setSessionId((s) => s + 1);
+    },
+    [cards, selectedIds]
+  );
 
-    setSession((prevSession) => {
-      const card = cards.find((c) => c.id === id);
-      if (!card) return prevSession;
-
-      const exists = prevSession.some((c) => c.id === id);
-      if (exists) {
-        return prevSession.filter((c) => c.id !== id);
-      } else {
-        return [...prevSession, card];
-      }
-    });
-  }, [cards]);
-
-  const regenerateSession = useCallback((preserveSelection = true) => {
-    const useSelected = selectedIds.size > 0;
-    const base = useSelected
-      ? cards.filter((c) => selectedIds.has(c.id))
-      : cards;
-
-    setSession(shuffle(base));
-    if (!preserveSelection && base.length) {
-      setSelectedIds(new Set(base.map((c) => c.id)));
-    }
-    setIdx(0);
+  const goTo = (index: number) => {
+    if (index < 0 || index >= session.length) return;
+    setIdx(index);
     setShowBack(false);
-    setSessionId((s) => s + 1);
-  }, [cards, selectedIds]);
+  };
 
   const clearSession = useCallback(() => {
     setSelectedIds(new Set());
@@ -169,5 +181,6 @@ export function useSession(cards: Card[], hasImported: boolean) {
     prev,
     reset,
     setSession,
+    goTo,
   };
 }
