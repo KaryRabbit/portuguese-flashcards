@@ -5,10 +5,12 @@ A modern, lightweight flashcard application for learning European Portuguese, bu
 ## Screenshots
 
 ### Study Mode
+
 ![Study Mode - Card View](docs/screenshots/study-mode.png)
 *Interactive flashcard study with audio pronunciation*
 
 ### Manage Mode
+
 ![Manage Mode - Card List](docs/screenshots/manage-mode.png)
 *Card management with search, filter, and import/export*
 
@@ -103,14 +105,17 @@ npm run preview
 5. Use **Next/Back** buttons to navigate
 6. Toggle **EN → PT** or **PT → EN** mode
 
-### Import/Export
+### Import / Export
 
-**Import** supports:
+#### CSV Import
 
-- CSV: `english,portuguese,type,example_en,example_pt`
-- JSON: Full card objects with examples & conjugations
+The app supports importing cards from a CSV file.
 
-**Export** creates CSV with all card data
+**Format (one card per line):**
+
+```csv
+english,portuguese,type,example_en,example_pt,present,past_perfeito,past_imperfeito,future
+
 
 ### Search & Filter
 
@@ -145,7 +150,7 @@ interface Card {
   back: string;                     // Portuguese (EU)
   type?: WordType;                  // noun, verb-regular, etc.
   examples?: ExamplePair[];         // Bilingual examples
-  conjugations?: Conjugations;      // Verb conjugations
+  conjugations?: Conjugations;      // Optional verb conjugations (present / past / future)
   createdAt?: number;               // Timestamp
 }
 ```

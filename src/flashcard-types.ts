@@ -23,13 +23,23 @@ export interface Card {
   conjugations?: Conjugations;
 }
 
-export interface Conjugations {
-  present?: ConjugationForms;
-  past?:
-    | ConjugationForms
-    | { perfeito?: ConjugationForms; imperfeito?: ConjugationForms };
-  future?: ConjugationForms;
-}
+export type ConjugationGroup = {
+  eu: string;
+  tu: string;
+  eleElaVoce: string;
+  nos: string;
+  vos: string;
+  elesElasVoces: string;
+};
+
+export type Conjugations = {
+  present?: ConjugationGroup;
+  past?: {
+    perfeito?: ConjugationGroup;
+    imperfeito?: ConjugationGroup;
+  };
+  future?: ConjugationGroup;
+};
 
 export interface ConjugationForms {
   eu?: string;

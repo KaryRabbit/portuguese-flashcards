@@ -132,8 +132,20 @@ export function CardTable({
 
   return (
     <>
-      <div style={{ maxHeight: '560px', overflowY: 'auto' }}>
-        <table className="table modern" style={{ width: '100%' }}>
+      {/* Desktop Table View */}
+      <div
+        className="desktop-table"
+        style={{
+          maxHeight: '560px',
+          overflow: 'auto',
+          WebkitOverflowScrolling: 'touch',
+          borderRadius: 12,
+        }}
+      >
+        <table
+          className="table modern"
+          style={{ width: '100%', minWidth: 720 }}
+        >
           <thead>
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
@@ -167,9 +179,7 @@ export function CardTable({
                         <span
                           style={{
                             fontSize: '0.75rem',
-                            opacity: header.column.getIsSorted()
-                              ? 0.9
-                              : 0.3,
+                            opacity: header.column.getIsSorted() ? 0.9 : 0.3,
                             transform:
                               header.column.getIsSorted() === 'asc'
                                 ? 'rotate(180deg)'
@@ -193,16 +203,80 @@ export function CardTable({
               <tr key={row.id}>
                 {row.getVisibleCells().map((cell) => (
                   <td key={cell.id}>
-                    {flexRender(
-                      cell.column.columnDef.cell,
-                      cell.getContext()
-                    )}
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
                 ))}
               </tr>
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile Card View */}
+      <div className="mobile-cards">
+        {table.getRowModel().rows.map((row) => {
+          const card = row.original;
+          const isChecked = selectedIds.has(card.id);
+          return (
+            <div
+              key={row.id}
+              className="card"
+              style={{
+                padding: '0.75rem',
+                marginBottom: '0.75rem',
+                background: isChecked ? '#f0f9ff' : '#fff',
+                border: isChecked
+                  ? '2px solid #3b82f6'
+                  : '1px solid var(--br)',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                  gap: '0.5rem',
+                  marginBottom: '0.5rem',
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={isChecked}
+                  onChange={() => onToggleSelect(card.id)}
+                  style={{ marginTop: '0.2rem', flexShrink: 0 }}
+                />
+                {columns[1].cell &&
+                  flexRender(columns[1].cell, row.getAllCells()[1].getContext())}
+                <button
+                  type="button"
+                  className="btn link"
+                  onClick={() => onRemove(card.id)}
+                  style={{ marginLeft: 'auto', flexShrink: 0 }}
+                >
+                  🗑
+                </button>
+              </div>
+              <div style={{ marginBottom: '0.5rem' }}>
+                <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>
+                  {card.front}
+                </div>
+                <div style={{ color: 'var(--muted)', fontSize: '0.9rem' }}>
+                  {card.back}
+                </div>
+              </div>
+              <div
+                style={{
+                  fontSize: '0.75rem',
+                  color: 'var(--muted)',
+                }}
+              >
+                {card.createdAt
+                  ? new Date(card.createdAt).toLocaleString()
+                  : '—'}
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {/* Pagination Controls */}
@@ -213,43 +287,61 @@ export function CardTable({
           justifyContent: 'space-between',
           marginTop: 12,
           gap: 8,
+          flexWrap: 'wrap',
         }}
       >
-        <button
-          className="btn"
-          onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
-        >
-          ◀ Prev
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            className="btn"
+            onClick={() => table.previousPage()}
+            disabled={!table.getCanPreviousPage()}
+          >
+            ◀ Prev
+          </button>
+          <button
+            className="btn"
+            onClick={() => table.nextPage()}
+            disabled={!table.getCanNextPage()}
+          >
+            Next ▶
+          </button>
+        </div>
 
         <span className="pill">
           Page {table.getState().pagination.pageIndex + 1} /{' '}
           {table.getPageCount()}
         </span>
 
-        <button
-          className="btn"
-          onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
-        >
-          Next ▶
-        </button>
-
-        <label className="muted">Rows:</label>
-        <select
-          className="input"
-          value={table.getState().pagination.pageSize}
-          onChange={(e) => table.setPageSize(Number(e.target.value))}
-          style={{ width: 80 }}
-        >
-          {[5, 10, 20, 50].map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </select>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <label className="muted">Rows:</label>
+          <select
+            className="input"
+            value={table.getState().pagination.pageSize}
+            onChange={(e) => table.setPageSize(Number(e.target.value))}
+            style={{ width: 80 }}
+          >
+            {[5, 10, 20, 50].map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
+
+      <style>{`
+        .mobile-cards {
+          display: none;
+        }
+        @media (max-width: 768px) {
+          .desktop-table {
+            display: none;
+          }
+          .mobile-cards {
+            display: block;
+          }
+        }
+      `}</style>
     </>
   );
 }

@@ -62,56 +62,46 @@ export function StudyMode({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                marginBottom: 8,
-                gap: 12,
+                marginBottom: 12,
+                gap: 8,
+                flexWrap: 'wrap',
               }}
             >
-              <div
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <span className="pill">
+                  Progress: {Math.min(idx + 1, sessionLength)}/{sessionLength}
+                </span>
+                <span className="pill">
+                  Remaining: {Math.max(sessionLength - (idx + 1), 0)}
+                </span>
+              </div>
+
+              <label
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginBottom: 12,
-                  flexWrap: 'wrap',
-                  gap: 8,
+                  gap: 6,
+                  fontSize: '0.9rem',
+                  fontWeight: 500,
+                  color: isActiveSelected ? '#111' : '#666',
+                  transition: 'color 0.2s ease',
+                  cursor: 'pointer',
+                  userSelect: 'none',
                 }}
               >
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  <span className="pill">
-                    Progress: {Math.min(idx + 1, sessionLength)}/{sessionLength}
-                  </span>
-                  <span className="pill">
-                    Remaining: {Math.max(sessionLength - (idx + 1), 0)}
-                  </span>
-                </div>
-
-                <label
+                <input
+                  type="checkbox"
+                  checked={isActiveSelected}
+                  onChange={onToggleSelect}
                   style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    fontSize: '0.95rem',
-                    fontWeight: 500,
-                    color: isActiveSelected ? '#111' : '#666',
-                    transition: 'color 0.2s ease',
+                    width: 16,
+                    height: 16,
+                    accentColor: isActiveSelected ? '#007aff' : '#aaa',
                     cursor: 'pointer',
-                    userSelect: 'none',
                   }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={isActiveSelected}
-                    onChange={onToggleSelect}
-                    style={{
-                      width: 16,
-                      height: 16,
-                      accentColor: isActiveSelected ? '#007aff' : '#aaa',
-                      cursor: 'pointer',
-                    }}
-                  />
-                  In session
-                </label>
-              </div>
+                />
+                In session
+              </label>
             </div>
           )}
           <div className="center-alignment">
@@ -202,13 +192,14 @@ export function StudyMode({
           {/* Display conjugations */}
           {showBack && active?.conjugations && (
             <div
+              className="conjugations-container"
               style={{
                 marginTop: 16,
                 borderTop: '1px solid #ddd',
                 paddingTop: 12,
                 textAlign: 'left',
                 fontSize: '0.95rem',
-                paddingLeft: '2.5rem',
+                paddingLeft: '1rem',
               }}
             >
               {Object.entries(active.conjugations).map(([tense, data]) => {
@@ -226,7 +217,14 @@ export function StudyMode({
                   };
 
                   return (
-                    <div key={tense} style={{ marginBottom: 12 }}>
+                    <div
+                      key={tense}
+                      style={{
+                        marginBottom: 24,
+                        paddingBottom: 16,
+                        borderBottom: '1px solid #eee',
+                      }}
+                    >
                       {d.perfeito && (
                         <>
                           <h4 style={{ margin: '6px 0', color: '#333' }}>
@@ -235,7 +233,7 @@ export function StudyMode({
                           <div
                             style={{
                               display: 'grid',
-                              gridTemplateColumns: '1fr 1fr',
+                              gridTemplateColumns: 'minmax(120px, 1fr) 2fr',
                               columnGap: 16,
                               rowGap: 4,
                               fontFamily: 'system-ui, sans-serif',
@@ -259,7 +257,7 @@ export function StudyMode({
                           <div
                             style={{
                               display: 'grid',
-                              gridTemplateColumns: '1fr 1fr',
+                              gridTemplateColumns: 'minmax(120px, 1fr) 2fr',
                               columnGap: 16,
                               rowGap: 4,
                               fontFamily: 'system-ui, sans-serif',
@@ -283,12 +281,19 @@ export function StudyMode({
                 const label = tense.charAt(0).toUpperCase() + tense.slice(1);
 
                 return (
-                  <div key={tense} style={{ marginBottom: 12 }}>
+                  <div
+                    key={tense}
+                    style={{
+                      marginBottom: 24,
+                      paddingBottom: 16,
+                      borderBottom: '1px solid #eee',
+                    }}
+                  >
                     <h4 style={{ margin: '6px 0', color: '#333' }}>{label}</h4>
                     <div
                       style={{
                         display: 'grid',
-                        gridTemplateColumns: '1fr 1fr',
+                        gridTemplateColumns: 'minmax(120px, 1fr) 2fr',
                         columnGap: 16,
                         rowGap: 4,
                         fontFamily: 'system-ui, sans-serif',
@@ -311,11 +316,17 @@ export function StudyMode({
             style={{
               display: 'flex',
               justifyContent: 'center',
-              gap: 12,
+              gap: 8,
               flexWrap: 'wrap',
+              marginTop: 16,
             }}
           >
-            <button type="button" className="btn" onClick={onPrev}>
+            <button
+              type="button"
+              className="btn"
+              onClick={onPrev}
+              style={{ flex: '1 1 auto', minWidth: 70 }}
+            >
               Back
             </button>
             <button
@@ -323,18 +334,41 @@ export function StudyMode({
               className="btn"
               onClick={onShuffle}
               title="Shuffle cards in current session"
+              style={{ flex: '0 0 auto' }}
             >
               <Shuffle size={18} />
             </button>
-            <button type="button" className="btn" onClick={onStop}>
+            <button
+              type="button"
+              className="btn"
+              onClick={onStop}
+              style={{ flex: '1 1 auto', minWidth: 70 }}
+            >
               Stop
             </button>
-            <button type="button" className="btn" onClick={onNext}>
+            <button
+              type="button"
+              className="btn"
+              onClick={onNext}
+              style={{ flex: '1 1 auto', minWidth: 70 }}
+            >
               Next
             </button>
 
-            <div className="jump">
-              <span className="muted">Jump to: </span>
+            <div
+              className="jump"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                flexBasis: '100%',
+                justifyContent: 'center',
+                marginTop: 4,
+              }}
+            >
+              <span className="muted" style={{ fontSize: '0.85rem' }}>
+                Jump to:
+              </span>
               <input
                 type="number"
                 value={gotoIndex ?? ''}
@@ -347,9 +381,18 @@ export function StudyMode({
                   onInput(e.target.value ? Number(e.target.value) : null)
                 }
                 onKeyDown={(e) => e.key === 'Enter' && onGoto()}
+                style={{ width: 70 }}
               />
             </div>
           </div>
+
+          <style>{`
+            @media (min-width: 768px) {
+              .conjugations-container {
+                padding-left: 2.5rem !important;
+              }
+            }
+          `}</style>
         </>
       ) : (
         <div className="muted" style={{ textAlign: 'center', padding: '2rem' }}>

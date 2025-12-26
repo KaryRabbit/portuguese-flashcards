@@ -75,19 +75,69 @@ export function App() {
     }
 
     const rows = cards.map((c) => {
-      const front = (c.front || '').replace(/,/g, '‚');
-      const back = (c.back || '').replace(/,/g, '‚');
       const ex = c.examples?.[0];
-      const enEx = ex?.en ? ex.en.replace(/,/g, '‚') : '';
-      const ptEx = ex?.pt ? ex.pt.replace(/,/g, '‚') : '';
-      const type = (c.type || '').replace(/,/g, '‚');
 
-      return [front, back, type ?? '', enEx, ptEx].join(',');
+      const present = c.conjugations?.present
+        ? [
+            c.conjugations.present.eu,
+            c.conjugations.present.tu,
+            c.conjugations.present.eleElaVoce,
+            c.conjugations.present.nos,
+            c.conjugations.present.vos,
+            c.conjugations.present.elesElasVoces,
+          ].join('|')
+        : '';
+
+      const perfeito = c.conjugations?.past?.perfeito
+        ? [
+            c.conjugations.past.perfeito.eu,
+            c.conjugations.past.perfeito.tu,
+            c.conjugations.past.perfeito.eleElaVoce,
+            c.conjugations.past.perfeito.nos,
+            c.conjugations.past.perfeito.vos,
+            c.conjugations.past.perfeito.elesElasVoces,
+          ].join('|')
+        : '';
+
+      const imperfeito = c.conjugations?.past?.imperfeito
+        ? [
+            c.conjugations.past.imperfeito.eu,
+            c.conjugations.past.imperfeito.tu,
+            c.conjugations.past.imperfeito.eleElaVoce,
+            c.conjugations.past.imperfeito.nos,
+            c.conjugations.past.imperfeito.vos,
+            c.conjugations.past.imperfeito.elesElasVoces,
+          ].join('|')
+        : '';
+
+      const future = c.conjugations?.future
+        ? [
+            c.conjugations.future.eu,
+            c.conjugations.future.tu,
+            c.conjugations.future.eleElaVoce,
+            c.conjugations.future.nos,
+            c.conjugations.future.vos,
+            c.conjugations.future.elesElasVoces,
+          ].join('|')
+        : '';
+
+      return [
+        c.front ?? '',
+        c.back ?? '',
+        c.type ?? '',
+        ex?.en ?? '',
+        ex?.pt ?? '',
+        present,
+        perfeito,
+        imperfeito,
+        future,
+      ].join(',');
     });
 
     const blob = new Blob([rows.join('\n')], {
       type: 'text/csv;charset=utf-8;',
     });
+
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -173,22 +223,26 @@ export function App() {
         >
           <div className="center-alignment" style={{ gap: '0.5rem' }}>
             <Trash2 size={16} />
-            Reset All
+            <span className="reset-text">Reset All</span>
           </div>
         </button>
         <span className="pill">
-          Cards: {cards.length} ({session.length} in session)
+          <span className="mobile-short">
+            {cards.length} ({session.length})
+          </span>
+          <span className="desktop-long">
+            Cards: {cards.length} ({session.length} in session)
+          </span>
         </span>
 
         <div
           style={{
-            marginLeft: 'auto',
             display: 'flex',
             gap: 8,
             alignItems: 'center',
           }}
         >
-          <label className="muted">Mode:</label>
+          <label className="muted mobile-hidden">Mode:</label>
           <select
             value={direction}
             onChange={(e) => {
@@ -196,13 +250,46 @@ export function App() {
               setShowBack(false);
             }}
             className="input"
-            style={{ width: 140 }}
+            style={{ minWidth: 100, width: 'auto' }}
           >
             <option value="en-pt">EN → PT</option>
             <option value="pt-en">PT → EN</option>
           </select>
         </div>
       </div>
+
+      <style>{`
+        .mobile-short {
+          display: inline;
+        }
+        .desktop-long {
+          display: none;
+        }
+        .mobile-hidden {
+          display: none;
+        }
+        .reset-text {
+          display: none;
+        }
+
+        @media (min-width: 500px) {
+          .reset-text {
+            display: inline;
+          }
+        }
+
+        @media (min-width: 768px) {
+          .mobile-short {
+            display: none;
+          }
+          .desktop-long {
+            display: inline;
+          }
+          .mobile-hidden {
+            display: inline;
+          }
+        }
+      `}</style>
 
       {mode === 'study' && (
         <StudyMode

@@ -1,13 +1,17 @@
 import type { PaginationState } from '@tanstack/react-table';
 import React, { useEffect, useRef, useState } from 'react';
-import type {
-  Card,
-  Conjugations,
-  ExamplePair,
-  WordType,
-} from '../flashcard-types';
+import type { Card, Conjugations, WordType } from '../flashcard-types';
 import { uid } from '../utils/storage';
 import { CardTable } from './CardTable';
+
+type ConjugationGroup = {
+  eu: string;
+  tu: string;
+  eleElaVoce: string;
+  nos: string;
+  vos: string;
+  elesElasVoces: string;
+};
 
 interface ManageModeProps {
   cards: Card[];
@@ -120,155 +124,92 @@ export function ManageMode({
     setExamplesText('');
   };
 
-  const normalizeConjugations = (data: unknown): Conjugations | undefined => {
-    if (!data || typeof data !== 'object') return undefined;
+  const parseGroup = (value?: string): ConjugationGroup | undefined => {
+    if (!value || !value.trim()) return undefined;
 
-    const PERSON_KEYS = [
-      'eu',
-      'tu',
-      'eleElaVoce',
-      'nos',
-      'vos',
-      'elesElasVoces',
-    ] as const;
+    const parts = value.split('|').map((p) => p.trim());
+    if (parts.length !== 6) return undefined;
 
-    const normalizeTense = (
-      tense: unknown
-    ): Record<string, string> | undefined => {
-      if (!tense || typeof tense !== 'object') return undefined;
-      const t = tense as Record<string, unknown>;
-      const result: Record<string, string> = {};
-      for (const k of PERSON_KEYS) {
-        const v = t[k];
-        if (typeof v === 'string' && v.trim()) result[k] = v.trim();
-      }
-      return Object.keys(result).length ? result : undefined;
+    return {
+      eu: parts[0],
+      tu: parts[1],
+      eleElaVoce: parts[2],
+      nos: parts[3],
+      vos: parts[4],
+      elesElasVoces: parts[5],
     };
-
-    const d = data as Record<string, unknown>;
-    const result: Conjugations = {};
-
-    if (d.present) result.present = normalizeTense(d.present);
-    if (d.future) result.future = normalizeTense(d.future);
-
-    if (d.past) {
-      const past = d.past as Record<string, unknown>;
-      if ('perfeito' in past || 'imperfeito' in past) {
-        result.past = {
-          perfeito: normalizeTense(past.perfeito),
-          imperfeito: normalizeTense(past.imperfeito),
-        };
-      } else {
-        result.past = normalizeTense(past);
-      }
-    }
-
-    return Object.keys(result).length ? result : undefined;
   };
 
   const importFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (!file.name.toLowerCase().endsWith('.csv')) {
+      alert('Only CSV files are allowed.');
+      e.target.value = '';
+      return;
+    }
+
     setIsImporting(true);
 
     try {
       const text = await file.text();
-      let newCards: Card[] = [];
 
-      const normalizeConjugationsCSV = (
-        data: string
-      ): Conjugations | undefined => {
-        const parts = data.split('|').map((p) => p.trim());
-        if (parts.length < 6) return undefined;
+      const newCards: Card[] = text
+        .split(/\r?\n/)
+        .map((l) => l.trim())
+        .filter(Boolean)
+        .map((line) => {
+          const cols = line.split(',').map((s) => s.trim());
 
-        return {
-          present: {
-            eu: parts[0],
-            tu: parts[1],
-            eleElaVoce: parts[2],
-            nos: parts[3],
-            vos: parts[4],
-            elesElasVoces: parts[5],
-          },
-        };
-      };
+          const front = cols[0];
+          const back = cols[1];
+          const type = (cols[2] ?? 'other') as WordType;
+          const enEx = cols[3];
+          const ptEx = cols[4];
 
-      const isCsvOrTxt = /\.(csv|txt)$/i.test(file.name);
+          if (!front || !back) return null;
 
-      // CSV / TXT import
-      if (isCsvOrTxt) {
-        newCards = text
-          .split(/\r?\n/)
-          .map((l) => l.trim())
-          .filter(Boolean)
-          .map((line) => {
-            const [front, back, type = 'other', enEx, ptEx, conj] = line
-              .split(',')
-              .map((s) => s.trim());
+          const conjugations: Conjugations = {};
 
-            if (!front || !back) return null;
+          const present = parseGroup(cols[5]);
+          if (present) conjugations.present = present;
 
-            const conjugations = conj
-              ? normalizeConjugationsCSV(conj)
-              : undefined;
+          const perfeito = parseGroup(cols[6]);
+          const imperfeito = parseGroup(cols[7]);
+          if (perfeito || imperfeito) {
+            conjugations.past = {};
+            if (perfeito) conjugations.past.perfeito = perfeito;
+            if (imperfeito) conjugations.past.imperfeito = imperfeito;
+          }
 
-            return {
-              id: uid(),
-              front,
-              back,
-              type: type as WordType,
-              examples: enEx && ptEx ? [{ en: enEx, pt: ptEx }] : undefined,
-              conjugations,
-              createdAt: Date.now(),
-            } as Card;
-          })
-          .filter((c): c is Card => !!c);
-      }
+          const future = parseGroup(cols[8]);
+          if (future) conjugations.future = future;
 
-      // JSON import (supports conjugations)
-      else if (file.name.endsWith('.json')) {
-        const arr = JSON.parse(text);
-        if (Array.isArray(arr)) {
-          newCards = arr
-            .map((it) => {
-              const front = (it.front ?? '').trim();
-              const back = (it.back ?? '').trim();
-              if (!front || !back) return null;
+          const hasConjugations =
+            conjugations.present ||
+            conjugations.future ||
+            (conjugations.past &&
+              (conjugations.past.perfeito || conjugations.past.imperfeito));
 
-              const type = (it.type || 'other') as WordType;
+          return {
+            id: uid(),
+            front,
+            back,
+            type,
+            examples: enEx && ptEx ? [{ en: enEx, pt: ptEx }] : undefined,
+            conjugations: hasConjugations ? conjugations : undefined,
+            createdAt: Date.now(),
+          } as Card;
+        })
+        .filter((c): c is Card => c !== null);
 
-              const examples = Array.isArray(it.examples)
-                ? it.examples
-                    .map((e: ExamplePair) => ({
-                      en: String(e?.en ?? '').trim(),
-                      pt: String(e?.pt ?? '').trim(),
-                    }))
-                    .filter((e: ExamplePair) => e.en && e.pt)
-                : undefined;
-
-              const conjugations = normalizeConjugations(it.conjugations);
-
-              return {
-                id: uid(),
-                front,
-                back,
-                type,
-                examples,
-                conjugations,
-                createdAt: Date.now(),
-              } as Card;
-            })
-            .filter((c): c is Card => !!c);
-        }
-      }
-
-      // After importing, merge cards
       if (newCards.length) {
         onImportCards(newCards);
         setHasImported(true);
       }
-    } catch (error) {
-      alert(`Import failed: ${(error as Error).message}`);
+    } catch (err) {
+      alert(`Import failed: ${(err as Error).message}`);
     } finally {
       e.target.value = '';
       setIsImporting(false);
@@ -280,7 +221,7 @@ export function ManageMode({
   return (
     <div className="card">
       <h3>Add Card</h3>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+      <div className="add-card-grid">
         <div className="input-field">
           <label className="muted">English</label>
           <input
@@ -337,12 +278,13 @@ export function ManageMode({
           marginTop: 8,
           alignItems: 'center',
           gap: 8,
+          flexWrap: 'wrap',
         }}
       >
         <input
           ref={fileInputRef}
           type="file"
-          accept=".csv,.json,"
+          accept=".csv"
           onChange={importFile}
           style={{ display: 'none' }}
         />
@@ -354,61 +296,52 @@ export function ManageMode({
             onClick={() => fileInputRef.current?.click()}
             disabled={isImporting}
           >
-            {isImporting ? 'Importing…' : 'Import File'}
+            {isImporting ? 'Importing…' : 'Import'}
           </button>
           <div className="tooltip-content">
-            <strong>Import Formats:</strong>
+            <strong>CSV format (one card per line):</strong>
+            <br />
+            <code>
+              english,portuguese,type,example_en,example_pt,
+              present,past_perfeito,past_imperfeito,future
+            </code>
             <br />
             <br />
-            <strong>CSV Format:</strong>
+            <strong>Rules:</strong>
+            <ul>
+              <li>One CSV line = one card</li>
+              <li>Columns are separated by commas (,)</li>
+              <li>
+                Conjugation columns are <b>optional</b> and can be provided
+                partially
+              </li>
+              <li>
+                Each conjugation column must contain exactly 6 forms separated
+                by <b>|</b>
+              </li>
+            </ul>
+            <em>
+              You may provide only one conjugation column (e.g. present only).
+              Missing conjugation columns are ignored.
+            </em>
+            <strong>Person order:</strong>
+            <br />
+            eu | tu | ele/ela/você | nós | vós | eles/elas/vocês
+            <br />
+            <br />
+            <strong>Example (single CSV line):</strong>
             <br />
             <code
               style={{
                 fontSize: '0.75rem',
-                background: '#374151',
-                padding: '4px 6px',
-                borderRadius: '3px',
                 display: 'block',
-                marginTop: '4px',
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word',
               }}
             >
-              english,portuguese,type,example_en,example_pt,conjugations
+              to be,ser,verb-irregular,I am happy.,Sou
+              feliz.,sou|és|é|somos|sois|são,fui|foste|foi|fomos|fostes|foram,era|eras|era|éramos|éreis|eram,serei|serás|será|seremos|sereis|serão
             </code>
-            <br />
-            <strong>Example (noun):</strong>
-            <br />
-            <code
-              style={{
-                fontSize: '0.75rem',
-                background: '#374151',
-                padding: '4px 6px',
-                borderRadius: '3px',
-                display: 'block',
-                marginTop: '4px',
-              }}
-            >
-              house,casa,noun,I like the house,Eu gosto da casa
-            </code>
-            <br />
-            <strong>Example (verb with conjugations):</strong>
-            <br />
-            <code
-              style={{
-                fontSize: '0.75rem',
-                background: '#374151',
-                padding: '4px 6px',
-                borderRadius: '3px',
-                display: 'block',
-                marginTop: '4px',
-              }}
-            >
-              to eat,comer,verb-regular,We eat together.,Comemos juntos.,como|comes|come|comemos|comeis|comem
-            </code>
-            <br />
-            <strong>Conjugations:</strong> 6 forms separated by | (eu|tu|ele/ela/você|nós|vós|eles/elas/vocês)
-            <br />
-            <br />
-            <strong>Supported types:</strong> noun, verb-regular, verb-irregular, adjective, adverb, expression, phrase, other
           </div>
         </div>
         <button
@@ -417,7 +350,7 @@ export function ManageMode({
           onClick={onExportCSV}
           disabled={isImporting || cards.length === 0}
         >
-          Export CSV
+          Export
         </button>
 
         <button
@@ -436,23 +369,19 @@ export function ManageMode({
         <div
           style={{
             display: 'flex',
-            gap: 12,
+            gap: 8,
             alignItems: 'center',
             flexWrap: 'wrap',
           }}
         >
           <span className="pill">Selected: {selected.length}</span>
-
-          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-            <span className="pill">
-              Items: {selected.length > 0 ? selected.length : cards.length}
-            </span>
-          </div>
+          <span className="pill">
+            Items: {selected.length > 0 ? selected.length : cards.length}
+          </span>
 
           <label
             className="muted small-text"
             style={{
-              marginLeft: 'auto',
               display: 'flex',
               alignItems: 'center',
               gap: 6,
@@ -468,27 +397,23 @@ export function ManageMode({
             Show only selected
           </label>
 
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button className="btn" onClick={onToggleSelectAll}>
-              Select all
-            </button>
-            <button className="btn" onClick={onClearSelection}>
-              Clear
-            </button>
+          <button className="btn" onClick={onToggleSelectAll}>
+            Select all
+          </button>
+          <button className="btn" onClick={onClearSelection}>
+            Clear
+          </button>
 
-            <button
-              className="btn primary"
-              onClick={() => onRegenerateSession(selectedIds.size > 0)}
-              disabled={cards.length === 0}
-              title={
-                selected.length > 0 ? 'Start with selected' : 'Start with all'
-              }
-            >
-              {selected.length > 0
-                ? 'Start session (selected)'
-                : 'Start session (all)'}
-            </button>
-          </div>
+          <button
+            className="btn primary"
+            onClick={() => onRegenerateSession(selectedIds.size > 0)}
+            disabled={cards.length === 0}
+            title={
+              selected.length > 0 ? 'Start with selected' : 'Start with all'
+            }
+          >
+            {selected.length > 0 ? 'Start (selected)' : 'Start (all)'}
+          </button>
         </div>
       </div>
 
@@ -498,6 +423,7 @@ export function ManageMode({
           alignItems: 'center',
           gap: 8,
           margin: '8px 0',
+          flexWrap: 'wrap',
         }}
       >
         <input
@@ -508,7 +434,7 @@ export function ManageMode({
             setPagination((p) => ({ ...p, pageIndex: 0 }));
           }}
           placeholder="Search English / Portuguese / examples"
-          style={{ minWidth: 260 }}
+          style={{ flex: '1 1 250px', maxWidth: 400, minWidth: 0 }}
         />
 
         <div
@@ -516,17 +442,18 @@ export function ManageMode({
             display: 'flex',
             gap: 8,
             alignItems: 'center',
-            flexShrink: 0,
           }}
         >
-          <label className="muted small-text">Filter by Type:</label>
+          <label className="muted small-text desktop-filter-label">
+            Filter:
+          </label>
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value as WordType | 'all')}
             className="input"
-            style={{ width: 180 }}
+            style={{ minWidth: 160 }}
           >
-            <option value="all">All</option>
+            <option value="all">All Types</option>
             <option value="noun">Noun</option>
             <option value="verb-regular">Verb (Regular)</option>
             <option value="verb-irregular">Verb (Irregular)</option>
@@ -537,6 +464,7 @@ export function ManageMode({
             <option value="other">Other</option>
           </select>
         </div>
+
         {q && (
           <button
             className="btn"
@@ -551,6 +479,17 @@ export function ManageMode({
           Results: {filtered.length}
         </span>
       </div>
+
+      <style>{`
+        .desktop-filter-label {
+          display: none;
+        }
+        @media (min-width: 768px) {
+          .desktop-filter-label {
+            display: inline;
+          }
+        }
+      `}</style>
 
       <CardTable
         cards={filtered}
