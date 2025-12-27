@@ -2,6 +2,7 @@ import type { PaginationState } from '@tanstack/react-table';
 import React, { useEffect, useRef, useState } from 'react';
 import type { Card, Conjugations, WordType } from '../flashcard-types';
 import { uid } from '../utils/storage';
+import { loadSampleWords } from '../utils/sampleWords';
 import { CardTable } from './CardTable';
 
 type ConjugationGroup = {
@@ -122,6 +123,27 @@ export function ManageMode({
     setEn('');
     setPt('');
     setExamplesText('');
+  };
+
+  const handleLoadSampleWords = () => {
+    if (cards.length > 0) {
+      const confirmed = confirm(
+        'This will add 2,251 curated European Portuguese words to your collection. Continue?'
+      );
+      if (!confirmed) return;
+    }
+
+    setIsImporting(true);
+    try {
+      const sampleWords = loadSampleWords();
+      onImportCards(sampleWords);
+      setHasImported(true);
+      alert(`Successfully loaded ${sampleWords.length} Portuguese words!`);
+    } catch (err) {
+      alert(`Failed to load sample words: ${(err as Error).message}`);
+    } finally {
+      setIsImporting(false);
+    }
   };
 
   const parseGroup = (value?: string): ConjugationGroup | undefined => {
@@ -344,6 +366,15 @@ export function ManageMode({
             </code>
           </div>
         </div>
+        <button
+          type="button"
+          className="btn"
+          onClick={handleLoadSampleWords}
+          disabled={isImporting}
+          title="Load 2,251 curated European Portuguese words"
+        >
+          {isImporting ? 'Loading…' : 'Load Sample Words'}
+        </button>
         <button
           type="button"
           className="btn"

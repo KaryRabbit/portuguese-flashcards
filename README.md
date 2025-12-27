@@ -22,6 +22,7 @@ A modern, lightweight flashcard application for learning European Portuguese, bu
 - **Card Management**: Add, edit, search, filter, and organize flashcards
 - **Rich Card Types**: Support for nouns, verbs (regular/irregular), adjectives, expressions, and more
 - **Examples & Conjugations**: Store example sentences and verb conjugations
+- **Sample Words**: Load 2,251 curated European Portuguese words with one click
 - **Import/Export**: Import from CSV/JSON and export to CSV
 - **Pagination & Sorting**: Efficient table with TanStack Table
 - **Local Storage**: All data stored locally in browser (no backend required)
@@ -78,7 +79,7 @@ Opens at `http://localhost:5173`
 npm run build
 ```
 
-Creates a single `dist/index.html` file (270KB gzipped to ~82KB)
+Creates a single `dist/index.html` file (502KB gzipped to ~159KB)
 
 ### Preview Production Build
 
@@ -87,6 +88,20 @@ npm run preview
 ```
 
 ## Usage
+
+### Loading Sample Words
+
+The app includes 2,251 curated European Portuguese words with examples and verb conjugations:
+
+1. Click **Manage** tab
+2. Click **Load Sample Words** button
+3. Confirm to add all words to your collection
+
+This instantly loads essential vocabulary including:
+- Common verbs (regular/irregular) with full conjugations
+- Everyday nouns, adjectives, and adverbs
+- Food, travel, technology, and business terms
+- European Portuguese specific vocabulary
 
 ### Adding Cards
 
