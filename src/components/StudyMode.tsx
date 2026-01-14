@@ -1,4 +1,4 @@
-import { Shuffle, Volume2, RotateCcw } from 'lucide-react';
+import { RotateCcw, Shuffle, Volume2 } from 'lucide-react';
 import React from 'react';
 import type { Card } from '../flashcard-types';
 import { isSpeechSupported, speak } from '../utils/speech';
@@ -61,23 +61,67 @@ export function StudyMode({
             <div
               className="muted"
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
                 marginBottom: 12,
-                gap: 8,
-                flexWrap: 'wrap',
               }}
             >
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 8,
+                  flexWrap: 'wrap',
+                  marginBottom: 8,
+                }}
+              >
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  <span className="pill">
+                    Progress: {Math.min(idx + 1, sessionLength)}/{sessionLength}
+                  </span>
+                  <span className="pill">
+                    Remaining: {Math.max(sessionLength - (idx + 1), 0)}
+                  </span>
+                </div>
                 <span className="pill">
-                  Progress: {Math.min(idx + 1, sessionLength)}/{sessionLength}
-                </span>
-                <span className="pill">
-                  Remaining: {Math.max(sessionLength - (idx + 1), 0)}
+                  {Math.round(
+                    (Math.min(idx + 1, sessionLength) / sessionLength) * 100
+                  )}
+                  %
                 </span>
               </div>
-
+              <div
+                style={{
+                  width: '100%',
+                  height: 8,
+                  backgroundColor: '#e0e0e0',
+                  borderRadius: 4,
+                  overflow: 'hidden',
+                  marginTop: '1rem',
+                }}
+              >
+                <div
+                  style={{
+                    width: `${
+                      (Math.min(idx + 1, sessionLength) / sessionLength) * 100
+                    }%`,
+                    height: '100%',
+                    backgroundColor: '#007aff',
+                    transition: 'width 0.3s ease',
+                  }}
+                />
+              </div>
+            </div>
+          )}
+          {active && (
+            <div
+              className="muted"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'flex-end',
+                marginBottom: 12,
+              }}
+            >
               <label
                 style={{
                   display: 'flex',
