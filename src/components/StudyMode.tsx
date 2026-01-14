@@ -1,4 +1,4 @@
-import { Shuffle, Volume2 } from 'lucide-react';
+import { Shuffle, Volume2, RotateCcw } from 'lucide-react';
 import React from 'react';
 import type { Card } from '../flashcard-types';
 import { isSpeechSupported, speak } from '../utils/speech';
@@ -17,6 +17,7 @@ interface StudyModeProps {
   onNext: () => void;
   onStop: () => void;
   onShuffle: () => void;
+  onResetProgress: () => void;
   onInput: (value: number | null) => void;
   onGoto: () => void;
   gotoIndex: number | null;
@@ -39,6 +40,7 @@ export function StudyMode({
   gotoIndex,
   onStop,
   onShuffle,
+  onResetProgress,
 }: StudyModeProps) {
   const frontText = active
     ? direction === 'en-pt'
@@ -337,6 +339,15 @@ export function StudyMode({
               style={{ flex: '0 0 auto' }}
             >
               <Shuffle size={18} />
+            </button>
+            <button
+              type="button"
+              className="btn"
+              onClick={onResetProgress}
+              title="Reset progress to first card"
+              style={{ flex: '0 0 auto' }}
+            >
+              <RotateCcw size={18} />
             </button>
             <button
               type="button"

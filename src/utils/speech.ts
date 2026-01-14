@@ -17,11 +17,36 @@ export const speak = (
   // Cancel any ongoing speech
   window.speechSynthesis.cancel();
 
+  // English sounds better at normal speed
+  const speechRate = lang.startsWith('en') ? 1.0 : rate;
+
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = lang;
-  utterance.rate = rate;
+  utterance.rate = speechRate;
   utterance.pitch = 1.0;
   utterance.volume = 1.0;
+
+  // Select better quality voice, prefer standard voices
+  const voices = window.speechSynthesis.getVoices();
+  const langVoices = voices.filter((v) => v.lang === lang);
+
+  // Try each preferred voice in order
+  const preferredNames = [
+    'Samantha',
+    'Alex',
+    'Karen',
+    'Victoria',
+    'Daniel',
+    'Google',
+  ];
+  let voice = null;
+  for (const name of preferredNames) {
+    voice = langVoices.find((v) => v.name.includes(name));
+    console.log(voice);
+    if (voice) break;
+  }
+  if (!voice) voice = langVoices.find((v) => v.default) || langVoices[0];
+  if (voice) utterance.voice = voice;
 
   window.speechSynthesis.speak(utterance);
 };

@@ -30,6 +30,7 @@ export function App() {
     next,
     prev,
     reset,
+    resetProgress,
     setSession,
     goTo,
   } = useSession(cards, hasImported);
@@ -308,7 +309,8 @@ export function App() {
           gotoIndex={gotoIndex}
           onInput={setGotoIndex}
           onGoto={handleGoto}
-          onShuffle={() => regenerateSession(true)}
+          onShuffle={() => regenerateSession(true, true)}
+          onResetProgress={resetProgress}
         />
       )}
 
@@ -322,7 +324,7 @@ export function App() {
           onAdd={addCard}
           onImportCards={handleImportCards}
           onExportCSV={exportCSV}
-          onRegenerateSession={regenerateSession}
+          onRegenerateSession={(preserveSelection) => regenerateSession(preserveSelection, false)}
           onClearSelection={handleClearSelection}
           setHasImported={setHasImported}
         />

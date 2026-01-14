@@ -3,6 +3,7 @@ import type { Card, ExamplePair } from '../flashcard-types';
 export const KEY = 'flashcards-min-v1';
 export const SESSION_KEY = 'flashcards-session-v1';
 export const SELECTED_KEY = 'flashcards-selected-v1';
+export const PROGRESS_KEY = 'flashcards-progress-v1';
 export const PAGE_SIZE_KEY = 'flashcards-page-size';
 
 export const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);

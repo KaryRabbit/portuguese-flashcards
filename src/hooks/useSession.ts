@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { Card } from '../flashcard-types';
-import { load, SELECTED_KEY, SESSION_KEY, shuffle } from '../utils/storage';
+import {
+  load,
+  PROGRESS_KEY,
+  SELECTED_KEY,
+  SESSION_KEY,
+  shuffle,
+} from '../utils/storage';
 
 export function useSession(cards: Card[], hasImported: boolean) {
   const [session, setSession] = useState<Card[]>([]);
@@ -29,6 +35,13 @@ export function useSession(cards: Card[], hasImported: boolean) {
     }
   }, [selectedIds, isSessionRestored]);
 
+  // Save current progress (idx) to localStorage
+  useEffect(() => {
+    if (isSessionRestored && session.length > 0) {
+      localStorage.setItem(PROGRESS_KEY, JSON.stringify(idx));
+    }
+  }, [idx, isSessionRestored, session.length]);
+
   // Restore session on mount
   useEffect(() => {
     if (hasImported) {
@@ -38,9 +51,11 @@ export function useSession(cards: Card[], hasImported: boolean) {
     try {
       const rawIds = localStorage.getItem(SELECTED_KEY);
       const rawSession = localStorage.getItem(SESSION_KEY);
+      const rawProgress = localStorage.getItem(PROGRESS_KEY);
 
       const savedIds: string[] = rawIds ? JSON.parse(rawIds) : [];
       const savedSession: Card[] = rawSession ? JSON.parse(rawSession) : [];
+      const savedProgress: number = rawProgress ? JSON.parse(rawProgress) : 0;
 
       // Try restoring saved session first
       if (Array.isArray(savedSession) && savedSession.length > 0) {
@@ -51,6 +66,12 @@ export function useSession(cards: Card[], hasImported: boolean) {
         if (restored.length > 0) {
           setSession(restored);
           setSelectedIds(new Set(restored.map((c) => c.id)));
+          // Restore progress, but ensure it's within bounds
+          const restoredIdx = Math.max(
+            0,
+            Math.min(savedProgress, restored.length - 1)
+          );
+          setIdx(restoredIdx);
           setIsSessionRestored(true);
           return;
         }
@@ -118,13 +139,13 @@ export function useSession(cards: Card[], hasImported: boolean) {
   );
 
   const regenerateSession = useCallback(
-    (preserveSelection = true) => {
+    (preserveSelection = true, shouldShuffle = false) => {
       const useSelected = selectedIds.size > 0;
       const base = useSelected
         ? cards.filter((c) => selectedIds.has(c.id))
         : cards;
 
-      setSession(shuffle(base));
+      setSession(shouldShuffle ? shuffle(base) : base);
       if (!preserveSelection && base.length) {
         setSelectedIds(new Set(base.map((c) => c.id)));
       }
@@ -148,6 +169,7 @@ export function useSession(cards: Card[], hasImported: boolean) {
     setShowBack(false);
     localStorage.removeItem(SESSION_KEY);
     localStorage.removeItem(SELECTED_KEY);
+    localStorage.removeItem(PROGRESS_KEY);
   }, []);
 
   const next = useCallback(() => {
@@ -161,6 +183,12 @@ export function useSession(cards: Card[], hasImported: boolean) {
   const reset = useCallback(() => {
     setIdx(0);
     setShowBack(false);
+  }, []);
+
+  const resetProgress = useCallback(() => {
+    setIdx(0);
+    setShowBack(false);
+    localStorage.setItem(PROGRESS_KEY, JSON.stringify(0));
   }, []);
 
   const active = session[idx] ?? null;
@@ -180,6 +208,7 @@ export function useSession(cards: Card[], hasImported: boolean) {
     next,
     prev,
     reset,
+    resetProgress,
     setSession,
     goTo,
   };
