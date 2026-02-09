@@ -185,19 +185,9 @@ export function StudyMode({
 
           {/* Display examples */}
           {showBack && active?.examples?.length ? (
-            <ul
-              className="muted"
-              style={{ marginTop: 8, textAlign: 'left', paddingLeft: 0 }}
-            >
+            <ul className="muted examples-list">
               {active.examples.map((ex, i) => (
-                <li
-                  key={i}
-                  style={{
-                    listStyle: 'none',
-                    marginBottom: 8,
-                    paddingLeft: '2.5rem',
-                  }}
-                >
+                <li key={i} className="example-item">
                   <div
                     style={{ display: 'flex', alignItems: 'center', gap: 4 }}
                   >
