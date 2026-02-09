@@ -84,7 +84,7 @@ export function StudyMode({
                 </div>
                 <span className="pill">
                   {Math.round(
-                    (Math.min(idx + 1, sessionLength) / sessionLength) * 100
+                    (Math.min(idx + 1, sessionLength) / sessionLength) * 100,
                   )}
                   %
                 </span>
@@ -172,8 +172,8 @@ export function StudyMode({
                         ? 'pt-PT'
                         : 'en-US'
                       : showBack
-                      ? 'en-US'
-                      : 'pt-PT';
+                        ? 'en-US'
+                        : 'pt-PT';
                   speak(textToSpeak, lang);
                 }}
                 title="Listen to pronunciation"
@@ -185,9 +185,19 @@ export function StudyMode({
 
           {/* Display examples */}
           {showBack && active?.examples?.length ? (
-            <ul className="muted" style={{ marginTop: 8, textAlign: 'left' }}>
+            <ul
+              className="muted"
+              style={{ marginTop: 8, textAlign: 'left', paddingLeft: 0 }}
+            >
               {active.examples.map((ex, i) => (
-                <div key={i} style={{ marginBottom: 8 }}>
+                <li
+                  key={i}
+                  style={{
+                    listStyle: 'none',
+                    marginBottom: 8,
+                    paddingLeft: '2.5rem',
+                  }}
+                >
                   <div
                     style={{ display: 'flex', alignItems: 'center', gap: 4 }}
                   >
@@ -230,7 +240,7 @@ export function StudyMode({
                       </button>
                     )}
                   </div>
-                </div>
+                </li>
               ))}
             </ul>
           ) : null}
