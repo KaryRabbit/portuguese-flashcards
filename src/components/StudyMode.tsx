@@ -42,6 +42,34 @@ export function StudyMode({
   onShuffle,
   onResetProgress,
 }: StudyModeProps) {
+  if (!active || sessionLength === 0) {
+    return (
+      <div className="card empty-state" key={sessionId}>
+        <h3>Start a Study Session</h3>
+        <div className="muted" style={{ marginBottom: 12 }}>
+          You don’t have an active session yet. Create one in Manage mode:
+        </div>
+        <div className="empty-steps">
+          <div>
+            1. Go to the <strong>Manage</strong> tab.
+          </div>
+          <div>
+            2. Select the cards you want (or leave none to use all).
+          </div>
+          <div>
+            3. Click <strong>Start (selected)</strong> or{' '}
+            <strong>Start (all)</strong>.
+          </div>
+        </div>
+        <div className="empty-actions">
+          <button type="button" className="btn primary" onClick={onStop}>
+            Go to Manage
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const frontText = active
     ? direction === 'en-pt'
       ? active.front

@@ -5,6 +5,7 @@ export const SESSION_KEY = 'flashcards-session-v1';
 export const SELECTED_KEY = 'flashcards-selected-v1';
 export const PROGRESS_KEY = 'flashcards-progress-v1';
 export const PAGE_SIZE_KEY = 'flashcards-page-size';
+export const SEED_KEY = 'flashcards-seed-v1';
 
 export const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
 
@@ -33,6 +34,22 @@ export const load = (): Card[] => {
 
 export const save = (cards: Card[]) =>
   localStorage.setItem(KEY, JSON.stringify(cards));
+
+export const isSeeded = () => {
+  try {
+    return localStorage.getItem(SEED_KEY) === 'true';
+  } catch {
+    return false;
+  }
+};
+
+export const setSeeded = () => {
+  try {
+    localStorage.setItem(SEED_KEY, 'true');
+  } catch {
+    // ignore
+  }
+};
 
 export const shuffle = <T,>(a: T[]) => {
   const arr = [...a];

@@ -154,6 +154,23 @@ body {
   opacity: 0.3;
   cursor: default;
 }
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.empty-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px dashed #e2e8f0;
+  border-radius: 0.75rem;
+  background: #f8fafc;
+}
+.empty-actions {
+  margin-top: 0.5rem;
+}
 .conjugation-guide {
   display: flex;
   flex-direction: column;

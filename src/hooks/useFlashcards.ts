@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Card, WordType } from '../flashcard-types';
-import { load, save } from '../utils/storage';
+import { isSeeded, load, save, setSeeded } from '../utils/storage';
 import { debounce } from '../utils/debounce';
+import { loadSampleWords } from '../utils/sampleWords';
 
 export function useFlashcards() {
   const [cards, setCards] = useState<Card[]>(() => load());
+  const hasSeededRef = useRef(false);
 
   // Debounced save function to improve performance
   const debouncedSaveRef = useRef(
@@ -16,6 +18,18 @@ export function useFlashcards() {
   useEffect(() => {
     debouncedSaveRef.current(cards);
   }, [cards]);
+
+  useEffect(() => {
+    if (hasSeededRef.current) return;
+    if (cards.length > 0) return;
+    if (isSeeded()) return;
+
+    const seeded = loadSampleWords();
+    setCards(seeded);
+    save(seeded);
+    setSeeded();
+    hasSeededRef.current = true;
+  }, [cards.length]);
 
   const addCard = useCallback((
     front: string,
