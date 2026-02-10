@@ -9,6 +9,11 @@ A modern, lightweight flashcard application for learning European Portuguese, bu
 ![Study Mode - Card View](docs/screenshots/study-mode.png)
 *Interactive flashcard study with audio pronunciation*
 
+### Conjugations
+
+![Conjugations - Verb Tenses](docs/screenshots/conjugations.png)
+*Full EU-PT conjugation guide with usage hints, examples, and audio*
+
 ### Manage Mode
 
 ![Manage Mode - Card List](docs/screenshots/manage-mode.png)

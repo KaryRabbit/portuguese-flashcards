@@ -1,5 +1,6 @@
 import { Trash2 } from 'lucide-react';
 import { useState } from 'react';
+import { ConjugationGuide } from './components/ConjugationGuide';
 import { ManageMode } from './components/ManageMode';
 import { StudyMode } from './components/StudyMode';
 import type { Card } from './flashcard-types';
@@ -8,7 +9,9 @@ import { useSession } from './hooks/useSession';
 import { KEY } from './utils/storage';
 
 export function App() {
-  const [mode, setMode] = useState<'study' | 'manage'>('study');
+  const [mode, setMode] = useState<'study' | 'manage' | 'conjugations'>(
+    'study'
+  );
   const [direction, setDirection] = useState<'en-pt' | 'pt-en'>('en-pt');
   const [hasImported, setHasImported] = useState(false);
   const [gotoIndex, setGotoIndex] = useState<number | null>(null);
@@ -215,6 +218,14 @@ export function App() {
           >
             Manage
           </button>
+          <button
+            type="button"
+            className={`btn ${mode === 'conjugations' ? 'primary' : ''}`}
+            aria-pressed={mode === 'conjugations'}
+            onClick={() => setMode('conjugations')}
+          >
+            Conjugations
+          </button>
         </div>
         <button
           type="button"
@@ -329,6 +340,7 @@ export function App() {
           setHasImported={setHasImported}
         />
       )}
+      {mode === 'conjugations' && <ConjugationGuide sessionCards={session} />}
 
       <footer className="muted small-text" style={{ textAlign: 'center' }}>
         Made with ❤️ in React · {cards.length} cards saved
