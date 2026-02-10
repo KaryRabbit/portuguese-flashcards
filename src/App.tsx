@@ -203,10 +203,7 @@ export function App() {
             type="button"
             className={`btn ${isStudy ? 'primary' : ''}`}
             aria-pressed={isStudy}
-            onClick={() => {
-              setMode('study');
-              reset();
-            }}
+            onClick={() => setMode('study')}
           >
             Study
           </button>
