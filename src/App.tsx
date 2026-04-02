@@ -5,8 +5,10 @@ import { ManageMode } from './components/ManageMode';
 import { StudyMode } from './components/StudyMode';
 import type { Card } from './flashcard-types';
 import { useFlashcards } from './hooks/useFlashcards';
+import { useKnownCards } from './hooks/useKnownCards';
 import { useSession } from './hooks/useSession';
-import { KEY } from './utils/storage';
+import { useStudyGroups } from './hooks/useStudyGroups';
+import { GROUPS_KEY, KEY, KNOWN_KEY } from './utils/storage';
 
 export function App() {
   const [mode, setMode] = useState<'study' | 'manage' | 'conjugations'>(
@@ -17,6 +19,8 @@ export function App() {
   const [gotoIndex, setGotoIndex] = useState<number | null>(null);
 
   const { cards, addCard, removeCard, importCards, clearAll } = useFlashcards();
+  const { groups, createGroup, deleteGroup } = useStudyGroups(cards);
+  const { knownIds, markKnown, markLearning } = useKnownCards();
 
   const {
     session,
@@ -29,6 +33,7 @@ export function App() {
     active,
     toggleSelect,
     regenerateSession,
+    startSession,
     clearSession,
     next,
     prev,
@@ -39,6 +44,20 @@ export function App() {
   } = useSession(cards, hasImported);
 
   const isActiveSelected = active ? selectedIds.has(active.id) : false;
+  const isActiveKnown = active ? knownIds.has(active.id) : false;
+  const knownInSession = session.filter((c) => knownIds.has(c.id)).length;
+
+  const handleMarkKnown = () => {
+    if (!active) return;
+    markKnown(active.id);
+    next();
+  };
+
+  const handleMarkLearning = () => {
+    if (!active) return;
+    markLearning(active.id);
+    next();
+  };
 
   const handleRemove = (id: string) => {
     removeCard(id);
@@ -70,6 +89,31 @@ export function App() {
     setSession([]);
     localStorage.removeItem('flashcards-session-v1');
     localStorage.removeItem('flashcards-selected-v1');
+  };
+
+  const handleSaveGroup = (name: string) => {
+    const ids = [...selectedIds];
+    const result = createGroup(name, ids);
+
+    if (!result.ok) {
+      alert('Select at least one card and add a study set name.');
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleLoadGroup = (groupId: string, studyNow = false) => {
+    const group = groups.find((item) => item.id === groupId);
+    if (!group) return;
+
+    startSession(group.cardIds, false);
+
+    if (studyNow) {
+      setMode('study');
+    } else {
+      setMode('manage');
+    }
   };
 
   const exportCSV = () => {
@@ -153,6 +197,8 @@ export function App() {
   const handleResetAll = () => {
     if (confirm('Delete all saved cards?')) {
       localStorage.removeItem(KEY);
+      localStorage.removeItem(GROUPS_KEY);
+      localStorage.removeItem(KNOWN_KEY);
       localStorage.removeItem('flashcards-sort-v1');
       localStorage.removeItem('flashcards-page-size');
       clearAll();
@@ -309,6 +355,7 @@ export function App() {
           showBack={showBack}
           direction={direction}
           isActiveSelected={isActiveSelected}
+          isActiveKnown={isActiveKnown}
           onToggleSelect={() => active && toggleSelect(active.id)}
           onToggleBack={() => setShowBack((s) => !s)}
           onPrev={handlePrev}
@@ -319,6 +366,9 @@ export function App() {
           onGoto={handleGoto}
           onShuffle={() => regenerateSession(true, true)}
           onResetProgress={resetProgress}
+          onMarkKnown={handleMarkKnown}
+          onMarkLearning={handleMarkLearning}
+          knownCount={knownInSession}
         />
       )}
 
@@ -326,14 +376,19 @@ export function App() {
         <ManageMode
           cards={cards}
           selectedIds={selectedIds}
+          knownIds={knownIds}
+          groups={groups}
           onToggleSelect={toggleSelect}
           onToggleSelectAll={handleToggleSelectAll}
           onRemove={handleRemove}
           onAdd={addCard}
           onImportCards={handleImportCards}
           onExportCSV={exportCSV}
-          onRegenerateSession={(preserveSelection) => regenerateSession(preserveSelection, false)}
+          onStartSession={startSession}
           onClearSelection={handleClearSelection}
+          onSaveGroup={handleSaveGroup}
+          onLoadGroup={handleLoadGroup}
+          onDeleteGroup={deleteGroup}
           setHasImported={setHasImported}
         />
       )}

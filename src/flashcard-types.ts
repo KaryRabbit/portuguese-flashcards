@@ -23,6 +23,13 @@ export interface Card {
   conjugations?: Conjugations;
 }
 
+export interface StudyGroup {
+  id: string;
+  name: string;
+  cardIds: string[];
+  createdAt: number;
+}
+
 export type ConjugationGroup = {
   eu: string;
   tu: string;

@@ -1,7 +1,7 @@
 import type { PaginationState } from '@tanstack/react-table';
 import React, { useEffect, useRef, useState } from 'react';
-import type { Card, Conjugations, WordType } from '../flashcard-types';
-import { uid } from '../utils/storage';
+import type { Card, Conjugations, StudyGroup, WordType } from '../flashcard-types';
+import { BATCH_KEY, uid } from '../utils/storage';
 import { loadSampleWords } from '../utils/sampleWords';
 import { CardTable } from './CardTable';
 
@@ -17,6 +17,8 @@ type ConjugationGroup = {
 interface ManageModeProps {
   cards: Card[];
   selectedIds: Set<string>;
+  knownIds: Set<string>;
+  groups: StudyGroup[];
   onToggleSelect: (id: string) => void;
   onToggleSelectAll: () => void;
   onRemove: (id: string) => void;
@@ -28,22 +30,30 @@ interface ManageModeProps {
   ) => void;
   onImportCards: (cards: Card[]) => void;
   onExportCSV: () => void;
-  onRegenerateSession: (preserveSelection: boolean) => void;
+  onStartSession: (cardIds: string[], shouldShuffle: boolean) => void;
   onClearSelection: () => void;
+  onSaveGroup: (name: string) => boolean;
+  onLoadGroup: (groupId: string, studyNow?: boolean) => void;
+  onDeleteGroup: (groupId: string) => void;
   setHasImported: (value: boolean) => void;
 }
 
 export function ManageMode({
   cards,
   selectedIds,
+  knownIds,
+  groups,
   onToggleSelect,
   onToggleSelectAll,
   onRemove,
   onAdd,
   onImportCards,
   onExportCSV,
-  onRegenerateSession,
+  onStartSession,
   onClearSelection,
+  onSaveGroup,
+  onLoadGroup,
+  onDeleteGroup,
   setHasImported,
 }: ManageModeProps) {
   const [en, setEn] = useState('');
@@ -54,6 +64,20 @@ export function ManageMode({
   const [filterType, setFilterType] = useState<WordType | 'all'>('all');
   const [onlySelected, setOnlySelected] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+  const [groupName, setGroupName] = useState('');
+  const [skipKnown, setSkipKnown] = useState(true);
+  const [batchSize, setBatchSize] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(BATCH_KEY) || '{}');
+      return saved.size || 20;
+    } catch { return 20; }
+  });
+  const [batchIndex, setBatchIndex] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(BATCH_KEY) || '{}');
+      return saved.index || 0;
+    } catch { return 0; }
+  });
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const PAGE_SIZE_KEY = 'flashcards-page-size';
@@ -80,6 +104,11 @@ export function ManageMode({
   useEffect(() => {
     localStorage.setItem(PAGE_SIZE_KEY, String(pagination.pageSize));
   }, [pagination.pageSize]);
+
+  // Save batch position whenever it changes
+  useEffect(() => {
+    localStorage.setItem(BATCH_KEY, JSON.stringify({ size: batchSize, index: batchIndex }));
+  }, [batchSize, batchIndex]);
 
   const norm = (s: string) => s.toLowerCase();
 
@@ -239,6 +268,44 @@ export function ManageMode({
   };
 
   const selected = cards.filter((c) => selectedIds.has(c.id));
+  const totalKnown = cards.filter((c) => knownIds.has(c.id)).length;
+
+  // Cards eligible for study (after filtering known)
+  const studyPool = React.useMemo(() => {
+    const base = selected.length > 0 ? selected : cards;
+    return skipKnown ? base.filter((c) => !knownIds.has(c.id)) : base;
+  }, [cards, selected, skipKnown, knownIds]);
+
+  const totalBatches = Math.max(1, Math.ceil(studyPool.length / batchSize));
+
+  // Keep batchIndex in range when pool or size changes
+  useEffect(() => {
+    if (batchIndex >= totalBatches) {
+      setBatchIndex(Math.max(0, totalBatches - 1));
+    }
+  }, [batchIndex, totalBatches]);
+
+  const handleStartSession = () => {
+    if (studyPool.length === 0) {
+      alert(
+        skipKnown
+          ? 'All cards in this selection are marked as known. Uncheck "Skip known" to include them.'
+          : 'No cards to study.'
+      );
+      return;
+    }
+    const start = batchIndex * batchSize;
+    const batch = studyPool.slice(start, start + batchSize);
+    onStartSession(
+      batch.map((c) => c.id),
+      false
+    );
+  };
+
+  const handleSaveGroup = () => {
+    if (!onSaveGroup(groupName)) return;
+    setGroupName('');
+  };
 
   return (
     <div className="card">
@@ -409,6 +476,11 @@ export function ManageMode({
           <span className="pill">
             Items: {selected.length > 0 ? selected.length : cards.length}
           </span>
+          {totalKnown > 0 && (
+            <span className="pill" style={{ background: '#dcfce7', borderColor: '#bbf7d0' }}>
+              Known: {totalKnown}
+            </span>
+          )}
 
           <label
             className="muted small-text"
@@ -428,24 +500,200 @@ export function ManageMode({
             Show only selected
           </label>
 
+          {totalKnown > 0 && (
+            <label
+              className="muted small-text"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={skipKnown}
+                onChange={(e) => setSkipKnown(e.target.checked)}
+              />
+              Skip known
+            </label>
+          )}
+
           <button className="btn" onClick={onToggleSelectAll}>
             Select all
           </button>
           <button className="btn" onClick={onClearSelection}>
             Clear
           </button>
+        </div>
+
+        <div
+          style={{
+            display: 'flex',
+            gap: 8,
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            marginTop: 12,
+            paddingTop: 12,
+            borderTop: '1px solid #e5e7eb',
+          }}
+        >
+          <label className="muted small-text" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            Batch size:
+            <select
+              className="input"
+              value={batchSize}
+              onChange={(e) => {
+                setBatchSize(Number(e.target.value));
+                setBatchIndex(0);
+              }}
+              style={{ width: 70 }}
+            >
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={30}>30</option>
+              <option value={50}>50</option>
+            </select>
+          </label>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <button
+              className="btn"
+              onClick={() => setBatchIndex((i) => Math.max(0, i - 1))}
+              disabled={batchIndex === 0}
+              style={{ padding: '0.35rem 0.6rem' }}
+            >
+              &lt;
+            </button>
+            <span className="pill" style={{ minWidth: 90, textAlign: 'center' }}>
+              Batch {batchIndex + 1} / {totalBatches}
+            </span>
+            <button
+              className="btn"
+              onClick={() => setBatchIndex((i) => Math.min(totalBatches - 1, i + 1))}
+              disabled={batchIndex >= totalBatches - 1}
+              style={{ padding: '0.35rem 0.6rem' }}
+            >
+              &gt;
+            </button>
+          </div>
+
+          <span className="muted small-text">
+            Cards {batchIndex * batchSize + 1}–{Math.min((batchIndex + 1) * batchSize, studyPool.length)} of {studyPool.length}
+          </span>
 
           <button
             className="btn primary"
-            onClick={() => onRegenerateSession(selectedIds.size > 0)}
-            disabled={cards.length === 0}
-            title={
-              selected.length > 0 ? 'Start with selected' : 'Start with all'
-            }
+            onClick={handleStartSession}
+            disabled={studyPool.length === 0}
           >
-            {selected.length > 0 ? 'Start (selected)' : 'Start (all)'}
+            Start batch
           </button>
         </div>
+      </div>
+
+      <div className="card" style={{ margin: '0 0 2rem', padding: 12 }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            gap: 12,
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            marginBottom: 12,
+          }}
+        >
+          <div>
+            <h3 style={{ margin: 0 }}>Saved Study Sets</h3>
+            <div className="muted small-text">
+              Save a selection for focused review, like new words, weak spots,
+              or a weekly batch.
+            </div>
+          </div>
+          <span className="pill">Sets: {groups.length}</span>
+        </div>
+
+        <div
+          style={{
+            display: 'flex',
+            gap: 8,
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            marginBottom: 12,
+          }}
+        >
+          <input
+            className="input"
+            value={groupName}
+            onChange={(e) => setGroupName(e.target.value)}
+            placeholder="e.g., Week 1 verbs"
+            style={{ flex: '1 1 240px', minWidth: 0 }}
+          />
+          <button
+            type="button"
+            className="btn primary"
+            onClick={handleSaveGroup}
+            disabled={selected.length === 0 || !groupName.trim()}
+            title="Save the current selection as a reusable study set"
+          >
+            Save selection as set
+          </button>
+        </div>
+
+        {groups.length === 0 ? (
+          <div className="muted small-text">
+            No saved sets yet. Select a few cards and save them as a reusable
+            study set.
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gap: 10 }}>
+            {groups.map((group) => (
+              <div
+                key={group.id}
+                style={{
+                  border: '1px solid var(--br)',
+                  borderRadius: 12,
+                  padding: 12,
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  gap: 12,
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                }}
+              >
+                <div>
+                  <div style={{ fontWeight: 600 }}>{group.name}</div>
+                  <div className="muted small-text">
+                    {group.cardIds.length} cards · saved{' '}
+                    {new Date(group.createdAt).toLocaleDateString()}
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    className="btn"
+                    onClick={() => onLoadGroup(group.id, false)}
+                  >
+                    Load
+                  </button>
+                  <button
+                    type="button"
+                    className="btn primary"
+                    onClick={() => onLoadGroup(group.id, true)}
+                  >
+                    Study
+                  </button>
+                  <button
+                    type="button"
+                    className="btn warn"
+                    onClick={() => onDeleteGroup(group.id)}
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div

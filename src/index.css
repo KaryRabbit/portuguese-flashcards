@@ -440,6 +440,37 @@ body {
   border-top-color: #1f2937;
 }
 
+/* Rating buttons */
+.rating-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.6rem 1.2rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  border-radius: 0.75rem;
+  transition: all 0.2s ease;
+  flex: 1 1 0;
+  justify-content: center;
+  max-width: 200px;
+}
+.rating-btn.known {
+  background: #dcfce7;
+  border-color: #86efac;
+  color: #166534;
+}
+.rating-btn.known:hover {
+  background: #bbf7d0;
+}
+.rating-btn.learning {
+  background: #fef3c7;
+  border-color: #fcd34d;
+  color: #92400e;
+}
+.rating-btn.learning:hover {
+  background: #fde68a;
+}
+
 /* Jump input */
 
 .jump {

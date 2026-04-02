@@ -1,4 +1,4 @@
-import { RotateCcw, Shuffle, Volume2 } from 'lucide-react';
+import { Check, RotateCcw, Shuffle, Volume2, X } from 'lucide-react';
 import React from 'react';
 import type { Card } from '../flashcard-types';
 import { isSpeechSupported, speak } from '../utils/speech';
@@ -11,6 +11,7 @@ interface StudyModeProps {
   showBack: boolean;
   direction: 'en-pt' | 'pt-en';
   isActiveSelected: boolean;
+  isActiveKnown: boolean;
   onToggleSelect: () => void;
   onToggleBack: () => void;
   onPrev: () => void;
@@ -20,7 +21,10 @@ interface StudyModeProps {
   onResetProgress: () => void;
   onInput: (value: number | null) => void;
   onGoto: () => void;
+  onMarkKnown: () => void;
+  onMarkLearning: () => void;
   gotoIndex: number | null;
+  knownCount: number;
 }
 
 export function StudyMode({
@@ -31,6 +35,7 @@ export function StudyMode({
   showBack,
   direction,
   isActiveSelected,
+  isActiveKnown,
   onToggleSelect,
   onToggleBack,
   onPrev,
@@ -41,6 +46,9 @@ export function StudyMode({
   onStop,
   onShuffle,
   onResetProgress,
+  onMarkKnown,
+  onMarkLearning,
+  knownCount,
 }: StudyModeProps) {
   if (!active || sessionLength === 0) {
     return (
@@ -383,6 +391,45 @@ export function StudyMode({
                   </div>
                 );
               })}
+            </div>
+          )}
+
+          {showBack && (
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'center',
+                gap: 12,
+                marginTop: 20,
+                marginBottom: 4,
+              }}
+            >
+              <button
+                type="button"
+                className="btn rating-btn learning"
+                onClick={onMarkLearning}
+              >
+                <X size={16} />
+                Still learning
+              </button>
+              <button
+                type="button"
+                className="btn rating-btn known"
+                onClick={onMarkKnown}
+              >
+                <Check size={16} />
+                Know it
+              </button>
+            </div>
+          )}
+
+          {knownCount > 0 && (
+            <div
+              className="muted"
+              style={{ textAlign: 'center', fontSize: '0.8rem', marginTop: 4 }}
+            >
+              {knownCount} card{knownCount !== 1 ? 's' : ''} marked as known
+              {isActiveKnown && ' (including this one)'}
             </div>
           )}
 

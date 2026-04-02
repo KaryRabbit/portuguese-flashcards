@@ -1,4 +1,4 @@
-import type { Card, ExamplePair } from '../flashcard-types';
+import type { Card, ExamplePair, StudyGroup } from '../flashcard-types';
 
 export const KEY = 'flashcards-min-v1';
 export const SESSION_KEY = 'flashcards-session-v1';
@@ -6,6 +6,9 @@ export const SELECTED_KEY = 'flashcards-selected-v1';
 export const PROGRESS_KEY = 'flashcards-progress-v1';
 export const PAGE_SIZE_KEY = 'flashcards-page-size';
 export const SEED_KEY = 'flashcards-seed-v1';
+export const GROUPS_KEY = 'flashcards-groups-v1';
+export const KNOWN_KEY = 'flashcards-known-v1';
+export const BATCH_KEY = 'flashcards-batch-v1';
 
 export const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
 
@@ -34,6 +37,34 @@ export const load = (): Card[] => {
 
 export const save = (cards: Card[]) =>
   localStorage.setItem(KEY, JSON.stringify(cards));
+
+export const loadGroups = (): StudyGroup[] => {
+  try {
+    const raw = localStorage.getItem(GROUPS_KEY);
+    if (!raw) return [];
+
+    const parsed = JSON.parse(raw) as StudyGroup[];
+    const now = Date.now();
+
+    return parsed
+      .map((group) => ({
+        id: String(group?.id ?? ''),
+        name: String(group?.name ?? '').trim(),
+        cardIds: Array.isArray(group?.cardIds)
+          ? group.cardIds
+              .map((id) => String(id).trim())
+              .filter(Boolean)
+          : [],
+        createdAt: typeof group?.createdAt === 'number' ? group.createdAt : now,
+      }))
+      .filter((group) => group.id && group.name && group.cardIds.length > 0);
+  } catch {
+    return [];
+  }
+};
+
+export const saveGroups = (groups: StudyGroup[]) =>
+  localStorage.setItem(GROUPS_KEY, JSON.stringify(groups));
 
 export const isSeeded = () => {
   try {

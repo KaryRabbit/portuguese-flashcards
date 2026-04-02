@@ -156,6 +156,23 @@ export function useSession(cards: Card[], hasImported: boolean) {
     [cards, selectedIds]
   );
 
+  const startSession = useCallback(
+    (cardIds: string[], shouldShuffle = false) => {
+      const orderedCards = cardIds
+        .map((id) => cards.find((card) => card.id === id))
+        .filter((card): card is Card => !!card);
+
+      const nextSession = shouldShuffle ? shuffle(orderedCards) : orderedCards;
+
+      setSelectedIds(new Set(orderedCards.map((card) => card.id)));
+      setSession(nextSession);
+      setIdx(0);
+      setShowBack(false);
+      setSessionId((s) => s + 1);
+    },
+    [cards]
+  );
+
   const goTo = (index: number) => {
     if (index < 0 || index >= session.length) return;
     setIdx(index);
@@ -204,6 +221,7 @@ export function useSession(cards: Card[], hasImported: boolean) {
     active,
     toggleSelect,
     regenerateSession,
+    startSession,
     clearSession,
     next,
     prev,

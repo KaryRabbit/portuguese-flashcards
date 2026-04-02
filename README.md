@@ -22,13 +22,16 @@ A modern, lightweight flashcard application for learning European Portuguese, bu
 ## Features
 
 - **Study Mode**: Interactive flashcard practice with EN↔PT translation support
+- **Know It / Still Learning**: Mark cards as known to skip them in future sessions
+- **Batch Study**: Study in fixed-size batches (10/20/30/50 cards) instead of the full pile — remembers your position
 - **Audio Pronunciation**: Built-in text-to-speech for both English and Portuguese
-- **Smart Session Management**: Persist study sessions across browser refreshes
-- **Card Management**: Add, edit, search, filter, and organize flashcards
+- **Smart Session Management**: Persist study sessions and batch progress across browser refreshes
+- **Card Management**: Add, search, filter, and organize flashcards
 - **Rich Card Types**: Support for nouns, verbs (regular/irregular), adjectives, expressions, and more
 - **Examples & Conjugations**: Store example sentences and verb conjugations
 - **Sample Words**: Load 2,251 curated European Portuguese words with one click
-- **Import/Export**: Import from CSV/JSON and export to CSV
+- **Import/Export**: Import from CSV and export to CSV
+- **Saved Study Sets**: Reuse named card selections for focused review
 - **Pagination & Sorting**: Efficient table with TanStack Table
 - **Local Storage**: All data stored locally in browser (no backend required)
 - **Single-File Build**: Compiles to a single HTML file for easy distribution
@@ -46,12 +49,15 @@ A modern, lightweight flashcard application for learning European Portuguese, bu
 ```plaintext
 src/
 ├── components/
-│   ├── StudyMode.tsx       # Study interface with card flipping
-│   ├── ManageMode.tsx      # Card management & import/export
-│   └── CardTable.tsx       # Sortable, paginated table
+│   ├── StudyMode.tsx       # Study interface with card flipping & rating
+│   ├── ManageMode.tsx      # Card management, batches & import/export
+│   ├── CardTable.tsx       # Sortable, paginated table
+│   └── ConjugationGuide.tsx # Verb conjugation display
 ├── hooks/
 │   ├── useFlashcards.ts    # Card CRUD operations
-│   └── useSession.ts       # Study session state
+│   ├── useSession.ts       # Study session state
+│   ├── useKnownCards.ts    # Known/learning card tracking
+│   └── useStudyGroups.ts   # Saved study sets
 ├── utils/
 │   ├── storage.ts          # localStorage helpers
 │   ├── debounce.ts         # Performance optimization
@@ -118,12 +124,15 @@ This instantly loads essential vocabulary including:
 
 ### Studying
 
-1. Select cards using checkboxes in Manage mode
-2. Click **Start session (selected)** or **Start session (all)**
-3. Click **Study** tab
-4. Click cards to flip between languages
-5. Use **Next/Back** buttons to navigate
-6. Toggle **EN → PT** or **PT → EN** mode
+1. Go to **Manage** tab
+2. Pick a batch size (10, 20, 30, or 50) and navigate to the batch you want
+3. Click **Start batch** (known cards are skipped by default)
+4. Click **Study** tab
+5. Click cards to flip between languages
+6. After flipping, mark **Know it** or **Still learning**
+7. Toggle **EN → PT** or **PT → EN** mode
+
+Your batch position is saved automatically — come back anytime and pick up where you left off.
 
 ### Import / Export
 
@@ -135,7 +144,9 @@ The app supports importing cards from a CSV file.
 
 ```csv
 english,portuguese,type,example_en,example_pt,present,past_perfeito,past_imperfeito,future
+```
 
+Conjugation columns are optional. Each conjugation column has 6 forms separated by `|` (eu, tu, ele/ela/voce, nos, vos, eles/elas/voces).
 
 ### Search & Filter
 
@@ -159,6 +170,10 @@ All data stored in `localStorage`:
 | `flashcards-min-v1` | Card collection |
 | `flashcards-session-v1` | Active study session |
 | `flashcards-selected-v1` | Selected card IDs |
+| `flashcards-progress-v1` | Current card index in session |
+| `flashcards-known-v1` | Cards marked as known |
+| `flashcards-batch-v1` | Batch size and position |
+| `flashcards-groups-v1` | Saved study sets |
 | `flashcards-page-size` | Table pagination preference |
 
 ## Card Schema
