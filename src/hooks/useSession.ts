@@ -189,6 +189,31 @@ export function useSession(cards: Card[], hasImported: boolean) {
     localStorage.removeItem(PROGRESS_KEY);
   }, []);
 
+  const removeFromSession = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+
+    setSession((prev) => {
+      const removeIndex = prev.findIndex((card) => card.id === id);
+      if (removeIndex === -1) return prev;
+
+      const next = prev.filter((card) => card.id !== id);
+
+      setIdx((currentIdx) => {
+        if (next.length === 0) return 0;
+        if (removeIndex < currentIdx) return currentIdx - 1;
+        return Math.min(currentIdx, next.length - 1);
+      });
+
+      return next;
+    });
+
+    setShowBack(false);
+  }, []);
+
   const next = useCallback(() => {
     setIdx((i) => Math.min(i + 1, Math.max(session.length - 1, 0)));
   }, [session.length]);
@@ -223,6 +248,7 @@ export function useSession(cards: Card[], hasImported: boolean) {
     regenerateSession,
     startSession,
     clearSession,
+    removeFromSession,
     next,
     prev,
     reset,
