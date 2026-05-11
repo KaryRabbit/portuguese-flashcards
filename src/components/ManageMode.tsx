@@ -30,6 +30,7 @@ interface ManageModeProps {
   ) => void;
   onImportCards: (cards: Card[]) => void;
   onExportCSV: () => void;
+  onExportUnknownCSV: () => void;
   onStartSession: (cardIds: string[], shouldShuffle: boolean) => void;
   onClearSelection: () => void;
   onSaveGroup: (name: string) => boolean;
@@ -49,6 +50,7 @@ export function ManageMode({
   onAdd,
   onImportCards,
   onExportCSV,
+  onExportUnknownCSV,
   onStartSession,
   onClearSelection,
   onSaveGroup,
@@ -448,7 +450,15 @@ export function ManageMode({
           onClick={onExportCSV}
           disabled={isImporting || cards.length === 0}
         >
-          Export
+          Export all
+        </button>
+        <button
+          type="button"
+          className="btn"
+          onClick={onExportUnknownCSV}
+          disabled={isImporting || cards.length === 0}
+        >
+          Export unknown only
         </button>
 
         <button
