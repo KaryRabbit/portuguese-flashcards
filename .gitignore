@@ -12,6 +12,19 @@ dist
 dist-ssr
 *.local
 
+# Mobile build outputs and local/native machine state
+android/.gradle/
+android/app/build/
+android/local.properties
+ios/App/build/
+ios/App/Pods/
+ios/App/App/public/
+ios/App/App/capacitor.config.json
+ios/App/App/config.xml
+ios/App/App.xcworkspace/xcuserdata/
+ios/App/App.xcodeproj/xcuserdata/
+skills/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

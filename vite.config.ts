@@ -2,7 +2,7 @@ import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import { viteSingleFile } from 'vite-plugin-singlefile';
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [react(), viteSingleFile()],
-  base: '/portuguese-flashcards/',
-});
+  base: mode === 'mobile' ? './' : '/portuguese-flashcards/',
+}));

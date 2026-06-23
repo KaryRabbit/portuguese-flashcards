@@ -19,11 +19,19 @@ body {
   color: var(--t);
   background: var(--bg);
   overflow-x: hidden;
+  touch-action: manipulation;
+  -webkit-text-size-adjust: 100%;
 }
+
+#root {
+  min-height: 100dvh;
+}
+
 .container {
   max-width: 960px;
   margin: 0 auto;
-  padding: 1rem;
+  padding: calc(1rem + env(safe-area-inset-top)) 1rem
+    calc(1rem + env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
@@ -38,10 +46,42 @@ body {
 }
 .toolbar {
   display: flex;
-  gap: 0.5rem;
-  align-items: center;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
 }
+
+.toolbar-main {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: nowrap;
+  min-width: 0;
+}
+
+.toolbar-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.direction-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.mobile-label {
+  display: none;
+}
+
+.desktop-label {
+  display: inline;
+}
+
 .btn {
   border: 1px solid var(--br);
   background: #fff;
@@ -49,7 +89,6 @@ body {
   padding: 0.5rem 0.8rem;
   cursor: pointer;
   font-size: 0.9rem;
-  white-space: nowrap;
   transition: all 0.2s ease;
 }
 .btn:hover:not(:disabled) {
@@ -343,12 +382,14 @@ body {
   border: 1px solid var(--br);
   border-radius: 0.75rem;
   overflow: hidden;
+  min-width: 0;
 }
 
 .toggle-group .btn {
   border: none;
   border-radius: 0;
   border-right: 1px solid var(--br);
+  min-width: 0;
 }
 
 .toggle-group .btn:last-child {
@@ -367,6 +408,9 @@ body {
   background: #d33;
   color: #fff;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
 }
 
 .small-text {
@@ -377,6 +421,55 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+.flash-row {
+  gap: 0.35rem;
+  flex-wrap: nowrap;
+}
+
+.study-card {
+  overflow: hidden;
+}
+
+.study-rating-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 20px;
+  margin-bottom: 4px;
+}
+
+.study-nav-actions {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+.study-jump {
+  flex-basis: 100%;
+  margin-top: 4px;
+}
+
+.study-conjugation-grid {
+  display: grid;
+  grid-template-columns: minmax(88px, auto) minmax(0, 1fr);
+  column-gap: 10px;
+  row-gap: 6px;
+  font-family: system-ui, sans-serif;
+}
+
+.study-conjugation-form {
+  opacity: 0.8;
+  min-width: 0;
+}
+
+.study-conjugation-value {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .tooltip-wrapper {
@@ -492,14 +585,128 @@ body {
   gap: 12px;
 }
 
+.manage-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.manage-actions .btn {
+  white-space: nowrap;
+}
+
+.cards-controls,
+.batch-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.batch-controls {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.cards-controls-buttons {
+  display: flex;
+  gap: 8px;
+}
+
 /* Mobile */
 @media (max-width: 768px) {
   .add-card-grid {
     grid-template-columns: 1fr;
   }
 
+  /* Even 2-column grid instead of ragged right-aligned wrapping */
+  .manage-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .manage-actions > .btn,
+  .manage-actions > .tooltip-wrapper {
+    width: 100%;
+  }
+
+  /* Import button fills the cell minus the info icon */
+  .manage-actions > .tooltip-wrapper > .btn {
+    flex: 1 1 auto;
+  }
+
+  /* Primary action (Add) spans the full width for emphasis */
+  .manage-actions > .btn.primary {
+    grid-column: 1 / -1;
+  }
+
+  /* Cards controls: put action buttons on their own full-width row */
+  .cards-controls-buttons {
+    width: 100%;
+    margin-top: 4px;
+  }
+
+  .cards-controls-buttons .btn {
+    flex: 1 1 0;
+  }
+
+  /* Batch controls: full-width primary, count on its own line */
+  .batch-controls {
+    align-items: center;
+  }
+
+  .batch-controls > .muted {
+    width: 100%;
+  }
+
+  .batch-controls > .btn.primary {
+    width: 100%;
+    margin-top: 4px;
+  }
+
+  .container {
+    padding-right: max(0.75rem, env(safe-area-inset-right));
+    padding-left: max(0.75rem, env(safe-area-inset-left));
+    padding-bottom: calc(5rem + env(safe-area-inset-bottom));
+  }
+
   .toolbar {
-    gap: 0.5rem;
+    gap: 0.6rem;
+  }
+
+  .toolbar-main {
+    width: 100%;
+  }
+
+  .toggle-group {
+    width: 100%;
+  }
+
+  .toggle-group .btn {
+    flex: 1 1 0;
+    padding: 0.5rem 0.3rem;
+    font-size: 0.82rem;
+  }
+
+  .desktop-label {
+    display: none;
+  }
+
+  .mobile-label {
+    display: inline;
+  }
+
+  .btn.warn {
+    width: 44px;
+    align-self: stretch;
+    height: auto;
+    padding: 0;
+    justify-content: center;
   }
 
   .pill {
@@ -507,8 +714,93 @@ body {
     padding: 0.2rem 0.5rem;
   }
 
+  .toolbar-meta {
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: nowrap;
+  }
+
+  .direction-wrap {
+    width: auto;
+    flex: 0 0 auto;
+    justify-content: flex-end;
+  }
+
+  .direction-wrap .input {
+    width: auto;
+    min-width: 0;
+    max-width: 168px;
+  }
+
   .small-text {
     font-size: 0.7rem;
+  }
+
+  .study-card-dense {
+    padding-bottom: calc(2rem + env(safe-area-inset-bottom));
+  }
+
+  .flash-dense {
+    min-height: 64px;
+    padding: 0.35rem 0.5rem;
+    font-size: clamp(1rem, 6vw, 1.35rem);
+  }
+
+  .study-rating-actions {
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .rating-btn {
+    max-width: none;
+    min-height: 46px;
+    padding: 0.4rem 0.6rem;
+    font-size: 0.82rem;
+    gap: 4px;
+    border-radius: 0.65rem;
+  }
+
+  .study-nav-actions {
+    gap: 6px;
+    margin-top: 10px;
+  }
+
+  .study-nav-actions .btn {
+    min-width: 0 !important;
+    padding: 0.45rem 0.6rem;
+    font-size: 0.82rem;
+  }
+
+  .study-nav-actions .btn:not(.rating-btn) {
+    flex: 1 1 calc(25% - 6px) !important;
+  }
+
+  .study-nav-actions .btn:last-of-type {
+    flex-basis: 100% !important;
+  }
+
+  .study-jump {
+    justify-content: center;
+    margin-top: 2px;
+  }
+
+  .study-jump span {
+    width: auto;
+  }
+
+  .study-conjugation-grid {
+    grid-template-columns: minmax(72px, auto) minmax(0, 1fr);
+    column-gap: 8px;
+    row-gap: 4px;
+    font-size: 0.9rem;
+  }
+
+  .study-conjugation-value {
+    font-size: 0.95rem;
+  }
+
+  footer.small-text {
+    display: none;
   }
 
   .table.modern {

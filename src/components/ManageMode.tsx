@@ -362,16 +362,7 @@ export function ManageMode({
         </div>
       </div>
 
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'end',
-          marginTop: 8,
-          alignItems: 'center',
-          gap: 8,
-          flexWrap: 'wrap',
-        }}
-      >
+      <div className="manage-actions">
         <input
           ref={fileInputRef}
           type="file"
@@ -474,14 +465,7 @@ export function ManageMode({
       <h3 style={{ marginTop: 16 }}>Cards</h3>
 
       <div className="card" style={{ margin: '1rem 0px 2rem', padding: 12 }}>
-        <div
-          style={{
-            display: 'flex',
-            gap: 8,
-            alignItems: 'center',
-            flexWrap: 'wrap',
-          }}
-        >
+        <div className="cards-controls">
           <span className="pill">Selected: {selected.length}</span>
           <span className="pill">
             Items: {selected.length > 0 ? selected.length : cards.length}
@@ -528,25 +512,17 @@ export function ManageMode({
             </label>
           )}
 
-          <button className="btn" onClick={onToggleSelectAll}>
-            Select all
-          </button>
-          <button className="btn" onClick={onClearSelection}>
-            Clear
-          </button>
+          <div className="cards-controls-buttons">
+            <button className="btn" onClick={onToggleSelectAll}>
+              Select all
+            </button>
+            <button className="btn" onClick={onClearSelection}>
+              Clear
+            </button>
+          </div>
         </div>
 
-        <div
-          style={{
-            display: 'flex',
-            gap: 8,
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            marginTop: 12,
-            paddingTop: 12,
-            borderTop: '1px solid #e5e7eb',
-          }}
-        >
+        <div className="batch-controls">
           <label className="muted small-text" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             Batch size:
             <select

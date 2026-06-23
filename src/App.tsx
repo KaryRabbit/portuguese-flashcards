@@ -35,6 +35,7 @@ export function App() {
     regenerateSession,
     startSession,
     clearSession,
+    removeFromSession,
     next,
     prev,
     reset,
@@ -50,7 +51,7 @@ export function App() {
   const handleMarkKnown = () => {
     if (!active) return;
     markKnown(active.id);
-    next();
+    removeFromSession(active.id);
   };
 
   const handleMarkLearning = () => {
@@ -61,12 +62,7 @@ export function App() {
 
   const handleRemove = (id: string) => {
     removeCard(id);
-    setSession((prev) => prev.filter((c) => c.id !== id));
-    setSelectedIds((prev) => {
-      const n = new Set(prev);
-      n.delete(id);
-      return n;
-    });
+    removeFromSession(id);
   };
 
   const handleToggleSelectAll = () => {
@@ -116,13 +112,13 @@ export function App() {
     }
   };
 
-  const exportCSV = () => {
-    if (cards.length === 0) {
+  const exportCardsCSV = (cardsToExport: Card[], filename: string) => {
+    if (cardsToExport.length === 0) {
       alert('No cards to export.');
       return;
     }
 
-    const rows = cards.map((c) => {
+    const rows = cardsToExport.map((c) => {
       const ex = c.examples?.[0];
 
       const present = c.conjugations?.present
@@ -189,9 +185,18 @@ export function App() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'flashcards.csv';
+    a.download = filename;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const exportCSV = () => {
+    exportCardsCSV(cards, 'flashcards.csv');
+  };
+
+  const exportUnknownCSV = () => {
+    const unknownCards = cards.filter((c) => !knownIds.has(c.id));
+    exportCardsCSV(unknownCards, 'flashcards-unknown.csv');
   };
 
   const handleResetAll = () => {
@@ -235,81 +240,76 @@ export function App() {
 
   return (
     <div className="container">
-      <div
-        className="toolbar"
-        style={{
-          gap: 8,
-          display: 'flex',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-        }}
-      >
-        <div className="toggle-group">
+      <div className="toolbar">
+        <div className="toolbar-main">
+          <div className="toggle-group">
+            <button
+              type="button"
+              className={`btn ${isStudy ? 'primary' : ''}`}
+              aria-pressed={isStudy}
+              onClick={() => setMode('study')}
+            >
+              <span className="desktop-label">Study</span>
+              <span className="mobile-label">Study</span>
+            </button>
+            <button
+              type="button"
+              className={`btn ${isManage ? 'primary' : ''}`}
+              aria-pressed={isManage}
+              onClick={() => setMode('manage')}
+            >
+              <span className="desktop-label">Manage</span>
+              <span className="mobile-label">Manage</span>
+            </button>
+            <button
+              type="button"
+              className={`btn ${mode === 'conjugations' ? 'primary' : ''}`}
+              aria-pressed={mode === 'conjugations'}
+              onClick={() => setMode('conjugations')}
+            >
+              <span className="desktop-label">Conjugations</span>
+              <span className="mobile-label">Verbs</span>
+            </button>
+          </div>
           <button
             type="button"
-            className={`btn ${isStudy ? 'primary' : ''}`}
-            aria-pressed={isStudy}
-            onClick={() => setMode('study')}
+            color="warn"
+            className="btn warn"
+            onClick={handleResetAll}
+            aria-label="Reset all"
+            title="Reset all"
           >
-            Study
-          </button>
-          <button
-            type="button"
-            className={`btn ${isManage ? 'primary' : ''}`}
-            aria-pressed={isManage}
-            onClick={() => setMode('manage')}
-          >
-            Manage
-          </button>
-          <button
-            type="button"
-            className={`btn ${mode === 'conjugations' ? 'primary' : ''}`}
-            aria-pressed={mode === 'conjugations'}
-            onClick={() => setMode('conjugations')}
-          >
-            Conjugations
-          </button>
-        </div>
-        <button
-          type="button"
-          color="warn"
-          className="btn warn"
-          onClick={handleResetAll}
-        >
-          <div className="center-alignment" style={{ gap: '0.5rem' }}>
             <Trash2 size={16} />
             <span className="reset-text">Reset All</span>
-          </div>
-        </button>
-        <span className="pill">
-          <span className="mobile-short">
-            {cards.length} ({session.length})
-          </span>
-          <span className="desktop-long">
-            Cards: {cards.length} ({session.length} in session)
-          </span>
-        </span>
+          </button>
+        </div>
 
-        <div
-          style={{
-            display: 'flex',
-            gap: 8,
-            alignItems: 'center',
-          }}
-        >
-          <label className="muted mobile-hidden">Mode:</label>
-          <select
-            value={direction}
-            onChange={(e) => {
-              setDirection(e.target.value as 'en-pt' | 'pt-en');
-              setShowBack(false);
-            }}
-            className="input"
-            style={{ minWidth: 100, width: 'auto' }}
-          >
-            <option value="en-pt">EN → PT</option>
-            <option value="pt-en">PT → EN</option>
-          </select>
+        <div className="toolbar-meta">
+          <span className="pill">
+            <span className="mobile-short">
+              {cards.length} ({session.length})
+            </span>
+            <span className="desktop-long">
+              Cards: {cards.length} ({session.length} in session)
+            </span>
+          </span>
+
+          {isStudy ? (
+            <div className="direction-wrap">
+              <label className="muted mobile-hidden">Mode:</label>
+              <select
+                value={direction}
+                onChange={(e) => {
+                  setDirection(e.target.value as 'en-pt' | 'pt-en');
+                  setShowBack(false);
+                }}
+                className="input"
+              >
+                <option value="en-pt">EN → PT</option>
+                <option value="pt-en">PT → EN</option>
+              </select>
+            </div>
+          ) : null}
         </div>
       </div>
 
@@ -384,6 +384,7 @@ export function App() {
           onAdd={addCard}
           onImportCards={handleImportCards}
           onExportCSV={exportCSV}
+          onExportUnknownCSV={exportUnknownCSV}
           onStartSession={startSession}
           onClearSelection={handleClearSelection}
           onSaveGroup={handleSaveGroup}

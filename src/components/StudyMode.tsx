@@ -88,9 +88,13 @@ export function StudyMode({
       ? active.back
       : active.front
     : '';
+  const hasConjugationsBack = Boolean(showBack && active?.conjugations);
 
   return (
-    <div className="card" key={sessionId}>
+    <div
+      className={`card study-card ${hasConjugationsBack ? 'study-card-dense' : ''}`}
+      key={sessionId}
+    >
       {active ? (
         <>
           {active && (
@@ -186,8 +190,12 @@ export function StudyMode({
               </label>
             </div>
           )}
-          <div className="center-alignment">
-            <div className="flash" role="button" onClick={onToggleBack}>
+          <div className="center-alignment flash-row">
+            <div
+              className={`flash ${hasConjugationsBack ? 'flash-dense' : ''}`}
+              role="button"
+              onClick={onToggleBack}
+            >
               {showBack ? backText : frontText}
             </div>
             {/* Audio pronunciation button */}
@@ -198,7 +206,7 @@ export function StudyMode({
                 style={{
                   border: 'none',
                   marginTop: '0.5rem',
-                  marginLeft: '-1rem',
+                  marginLeft: 0,
                 }}
                 onClick={() => {
                   const textToSpeak = showBack ? backText : frontText;
@@ -312,19 +320,13 @@ export function StudyMode({
                           <h4 style={{ margin: '6px 0', color: '#333' }}>
                             Past (Perfeito)
                           </h4>
-                          <div
-                            style={{
-                              display: 'grid',
-                              gridTemplateColumns: 'minmax(120px, 1fr) 2fr',
-                              columnGap: 16,
-                              rowGap: 4,
-                              fontFamily: 'system-ui, sans-serif',
-                            }}
-                          >
+                          <div className="study-conjugation-grid">
                             {Object.entries(d.perfeito).map(([form, val]) => (
                               <React.Fragment key={form}>
-                                <span style={{ opacity: 0.8 }}>{form}</span>
-                                <b>{val}</b>
+                                <span className="study-conjugation-form">
+                                  {form}
+                                </span>
+                                <b className="study-conjugation-value">{val}</b>
                               </React.Fragment>
                             ))}
                           </div>
@@ -336,19 +338,13 @@ export function StudyMode({
                           <h4 style={{ margin: '10px 0 6px', color: '#333' }}>
                             Past (Imperfeito)
                           </h4>
-                          <div
-                            style={{
-                              display: 'grid',
-                              gridTemplateColumns: 'minmax(120px, 1fr) 2fr',
-                              columnGap: 16,
-                              rowGap: 4,
-                              fontFamily: 'system-ui, sans-serif',
-                            }}
-                          >
+                          <div className="study-conjugation-grid">
                             {Object.entries(d.imperfeito).map(([form, val]) => (
                               <React.Fragment key={form}>
-                                <span style={{ opacity: 0.8 }}>{form}</span>
-                                <b>{val}</b>
+                                <span className="study-conjugation-form">
+                                  {form}
+                                </span>
+                                <b className="study-conjugation-value">{val}</b>
                               </React.Fragment>
                             ))}
                           </div>
@@ -372,19 +368,11 @@ export function StudyMode({
                     }}
                   >
                     <h4 style={{ margin: '6px 0', color: '#333' }}>{label}</h4>
-                    <div
-                      style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'minmax(120px, 1fr) 2fr',
-                        columnGap: 16,
-                        rowGap: 4,
-                        fontFamily: 'system-ui, sans-serif',
-                      }}
-                    >
+                    <div className="study-conjugation-grid">
                       {Object.entries(simple).map(([form, val]) => (
                         <React.Fragment key={form}>
-                          <span style={{ opacity: 0.8 }}>{form}</span>
-                          <b>{val}</b>
+                          <span className="study-conjugation-form">{form}</span>
+                          <b className="study-conjugation-value">{val}</b>
                         </React.Fragment>
                       ))}
                     </div>
@@ -395,15 +383,7 @@ export function StudyMode({
           )}
 
           {showBack && (
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'center',
-                gap: 12,
-                marginTop: 20,
-                marginBottom: 4,
-              }}
-            >
+            <div className="study-rating-actions">
               <button
                 type="button"
                 className="btn rating-btn learning"
@@ -433,15 +413,7 @@ export function StudyMode({
             </div>
           )}
 
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'center',
-              gap: 8,
-              flexWrap: 'wrap',
-              marginTop: 16,
-            }}
-          >
+          <div className="study-nav-actions">
             <button
               type="button"
               className="btn"
@@ -485,17 +457,7 @@ export function StudyMode({
               Next
             </button>
 
-            <div
-              className="jump"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                flexBasis: '100%',
-                justifyContent: 'center',
-                marginTop: 4,
-              }}
-            >
+            <div className="jump study-jump">
               <span className="muted" style={{ fontSize: '0.85rem' }}>
                 Jump to:
               </span>
