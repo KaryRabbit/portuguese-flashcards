@@ -13,25 +13,33 @@
 * {
   box-sizing: border-box;
 }
+html,
+body {
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100%;
+}
 body {
   margin: 0;
   font-family: Inter, system-ui, Segoe UI, Roboto, Arial, sans-serif;
   color: var(--t);
   background: var(--bg);
-  overflow-x: hidden;
   touch-action: manipulation;
   -webkit-text-size-adjust: 100%;
 }
 
 #root {
   min-height: 100dvh;
+  overflow-x: hidden;
 }
 
 .container {
   max-width: 960px;
   margin: 0 auto;
+  /* Extra bottom room so the floating "+" button never rests on top of the
+     last row of content. */
   padding: calc(1rem + env(safe-area-inset-top)) 1rem
-    calc(1rem + env(safe-area-inset-bottom));
+    calc(6rem + env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
@@ -617,10 +625,46 @@ body {
   gap: 8px;
 }
 
+/* Buttons that pair an icon with a label (e.g. "＋ Add a word") */
+.btn-inline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.batch-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Keeps "Batch size" and the batch nav together on one row */
+.batch-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+.batch-top-row > label {
+  min-width: 0;
+}
+
 /* Mobile */
 @media (max-width: 768px) {
   .add-card-grid {
     grid-template-columns: 1fr;
+  }
+
+  /* Vertical stack of rows; batch size + nav share the top row (one line),
+     count on its own line, Start batch full-width. */
+  .batch-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .batch-controls > .btn.primary {
+    width: 100%;
   }
 
   /* Even 2-column grid instead of ragged right-aligned wrapping */
@@ -684,7 +728,10 @@ body {
   }
 
   .toggle-group {
-    width: 100%;
+    /* Share the row with the Reset button instead of forcing 100% width,
+       which overflowed the viewport (clipping Reset + horizontal scroll). */
+    flex: 1 1 auto;
+    min-width: 0;
   }
 
   .toggle-group .btn {
@@ -812,4 +859,179 @@ body {
     max-width: 90vw;
     font-size: 0.75rem;
   }
+}
+
+/* Word of the day banner (Study tab) */
+.wotd {
+  border: 1px solid var(--br);
+  border-radius: 1rem;
+  padding: 0.75rem 1rem;
+  background: var(--card-soft);
+}
+.wotd-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 700;
+  color: var(--accent);
+}
+.wotd-body {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 3px;
+}
+.wotd-en {
+  font-weight: 600;
+}
+.wotd-sep {
+  color: var(--muted);
+}
+.wotd-pt {
+  font-weight: 600;
+  color: var(--accent);
+}
+.wotd-audio {
+  border: none;
+  padding: 4px;
+  background: transparent;
+}
+.wotd-example {
+  margin-top: 4px;
+  font-style: italic;
+}
+
+/* Add-word header (Manage tab) */
+.manage-add-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Floating action button — add a word from anywhere */
+.fab {
+  position: fixed;
+  right: max(16px, env(safe-area-inset-right));
+  bottom: max(16px, env(safe-area-inset-bottom));
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.25);
+  cursor: pointer;
+  z-index: 900;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+.fab:hover {
+  background: #0b5c55;
+}
+.fab:active {
+  transform: scale(0.94);
+}
+
+/* Add-word dialog. Top-anchored (not a bottom sheet) so the on-screen keyboard,
+   which covers the bottom of the screen, never hides the close button or the
+   Save action. The panel scrolls internally with a pinned header, so the ✕ is
+   always reachable and Save can be scrolled to above the keyboard. */
+.sheet-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: max(12px, env(safe-area-inset-top)) 12px
+    max(12px, env(safe-area-inset-bottom));
+  z-index: 1000;
+}
+.sheet-panel {
+  width: 100%;
+  max-width: 520px;
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 0 16px 16px;
+  max-height: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.25);
+  animation: sheet-in 0.18s ease;
+}
+@keyframes sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.sheet-header {
+  position: sticky;
+  top: 0;
+  background: var(--card-bg);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 0 12px;
+  z-index: 1;
+}
+@media (min-width: 768px) {
+  .sheet-overlay {
+    align-items: center;
+  }
+}
+.sheet-body {
+  display: grid;
+  gap: 12px;
+}
+.sheet-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+.sheet-confirm {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #166534;
+  background: #dcfce7;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.9rem;
+}
+.sheet-confirm.is-duplicate {
+  color: #92400e;
+  background: #fef3c7;
+  border-color: #fcd34d;
+}
+
+/* Advanced / Backup collapsible (Manage tab) */
+.advanced-section {
+  margin-top: 24px;
+  border-top: 1px solid var(--br);
+  padding-top: 12px;
+}
+.advanced-section > summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 0.9rem;
+  user-select: none;
+}
+.advanced-body {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 12px;
 }

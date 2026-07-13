@@ -238,6 +238,7 @@ export function useSession(cards: Card[], hasImported: boolean) {
   return {
     session,
     sessionId,
+    isSessionRestored,
     selectedIds,
     setSelectedIds,
     idx,

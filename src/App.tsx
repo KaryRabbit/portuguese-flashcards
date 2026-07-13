@@ -1,14 +1,21 @@
-import { Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { Plus, Trash2 } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { AddWordSheet } from './components/AddWordSheet';
 import { ConjugationGuide } from './components/ConjugationGuide';
 import { ManageMode } from './components/ManageMode';
 import { StudyMode } from './components/StudyMode';
+import { WordOfTheDay } from './components/WordOfTheDay';
 import type { Card } from './flashcard-types';
+import { getWordOfTheDay } from './utils/wordOfTheDay';
 import { useFlashcards } from './hooks/useFlashcards';
 import { useKnownCards } from './hooks/useKnownCards';
 import { useSession } from './hooks/useSession';
 import { useStudyGroups } from './hooks/useStudyGroups';
-import { GROUPS_KEY, KEY, KNOWN_KEY } from './utils/storage';
+import { GROUPS_KEY, KEY, KNOWN_KEY, shuffle } from './utils/storage';
+
+// A fresh auto-started or "Start studying" session uses a bite-sized slice,
+// matching the app's existing batch philosophy (default batch size is 20).
+const DEFAULT_SESSION_SIZE = 20;
 
 export function App() {
   const [mode, setMode] = useState<'study' | 'manage' | 'conjugations'>(
@@ -17,6 +24,7 @@ export function App() {
   const [direction, setDirection] = useState<'en-pt' | 'pt-en'>('en-pt');
   const [hasImported, setHasImported] = useState(false);
   const [gotoIndex, setGotoIndex] = useState<number | null>(null);
+  const [addOpen, setAddOpen] = useState(false);
 
   const { cards, addCard, removeCard, importCards, clearAll } = useFlashcards();
   const { groups, createGroup, deleteGroup } = useStudyGroups(cards);
@@ -25,6 +33,7 @@ export function App() {
   const {
     session,
     sessionId,
+    isSessionRestored,
     selectedIds,
     setSelectedIds,
     idx,
@@ -43,6 +52,35 @@ export function App() {
     setSession,
     goTo,
   } = useSession(cards, hasImported);
+
+  // Build a fresh, shuffled, bite-sized session from the cards the user is
+  // still learning (falling back to all cards if everything is known).
+  const startDefaultSession = useCallback(() => {
+    if (cards.length === 0) return;
+    const learning = cards.filter((c) => !knownIds.has(c.id));
+    const base = learning.length > 0 ? learning : cards;
+    const ids = shuffle(base)
+      .slice(0, DEFAULT_SESSION_SIZE)
+      .map((c) => c.id);
+    startSession(ids, false);
+    setMode('study');
+  }, [cards, knownIds, startSession]);
+
+  // Instant study on open: once cards are ready and the saved session (if any)
+  // has been restored, auto-start a default session so Study is usable
+  // immediately. Runs at most once per app load so it never interrupts the user
+  // mid-session or after they intentionally stop.
+  const bootstrappedRef = useRef(false);
+  useEffect(() => {
+    if (bootstrappedRef.current) return;
+    if (!isSessionRestored) return;
+    if (cards.length === 0) return;
+    bootstrappedRef.current = true;
+    if (session.length > 0) return; // a saved session was restored
+    startDefaultSession();
+  }, [isSessionRestored, cards.length, session.length, startDefaultSession]);
+
+  const wordOfTheDay = getWordOfTheDay(cards);
 
   const isActiveSelected = active ? selectedIds.has(active.id) : false;
   const isActiveKnown = active ? knownIds.has(active.id) : false;
@@ -346,6 +384,8 @@ export function App() {
         }
       `}</style>
 
+      {mode === 'study' && <WordOfTheDay card={wordOfTheDay} />}
+
       {mode === 'study' && (
         <StudyMode
           active={active}
@@ -369,6 +409,9 @@ export function App() {
           onMarkKnown={handleMarkKnown}
           onMarkLearning={handleMarkLearning}
           knownCount={knownInSession}
+          cardsCount={cards.length}
+          onStartDefault={startDefaultSession}
+          onAddWord={() => setAddOpen(true)}
         />
       )}
 
@@ -381,7 +424,7 @@ export function App() {
           onToggleSelect={toggleSelect}
           onToggleSelectAll={handleToggleSelectAll}
           onRemove={handleRemove}
-          onAdd={addCard}
+          onOpenAddWord={() => setAddOpen(true)}
           onImportCards={handleImportCards}
           onExportCSV={exportCSV}
           onExportUnknownCSV={exportUnknownCSV}
@@ -398,6 +441,24 @@ export function App() {
       <footer className="muted small-text" style={{ textAlign: 'center' }}>
         Made with ❤️ in React · {cards.length} cards saved
       </footer>
+
+      {mode !== 'conjugations' && (
+        <button
+          type="button"
+          className="fab"
+          onClick={() => setAddOpen(true)}
+          aria-label="Add a word"
+          title="Add a word"
+        >
+          <Plus size={24} />
+        </button>
+      )}
+
+      <AddWordSheet
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        onAdd={addCard}
+      />
     </div>
   );
 }

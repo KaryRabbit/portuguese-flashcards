@@ -1,6 +1,7 @@
-import { Check, RotateCcw, Shuffle, Volume2, X } from 'lucide-react';
+import { Check, Plus, RotateCcw, Shuffle, Volume2, X } from 'lucide-react';
 import React from 'react';
 import type { Card } from '../flashcard-types';
+import { useSwipe } from '../hooks/useSwipe';
 import { isSpeechSupported, speak } from '../utils/speech';
 
 interface StudyModeProps {
@@ -25,6 +26,9 @@ interface StudyModeProps {
   onMarkLearning: () => void;
   gotoIndex: number | null;
   knownCount: number;
+  cardsCount: number;
+  onStartDefault: () => void;
+  onAddWord: () => void;
 }
 
 export function StudyMode({
@@ -49,31 +53,58 @@ export function StudyMode({
   onMarkKnown,
   onMarkLearning,
   knownCount,
+  cardsCount,
+  onStartDefault,
+  onAddWord,
 }: StudyModeProps) {
+  const swipe = useSwipe({
+    onSwipeLeft: onNext,
+    onSwipeRight: onPrev,
+    onTap: onToggleBack,
+  });
+
   if (!active || sessionLength === 0) {
+    const noCards = cardsCount === 0;
     return (
       <div className="card empty-state" key={sessionId}>
-        <h3>Start a Study Session</h3>
-        <div className="muted" style={{ marginBottom: 12 }}>
-          You don’t have an active session yet. Create one in Manage mode:
-        </div>
-        <div className="empty-steps">
-          <div>
-            1. Go to the <strong>Manage</strong> tab.
-          </div>
-          <div>
-            2. Select the cards you want (or leave none to use all).
-          </div>
-          <div>
-            3. Click <strong>Start (selected)</strong> or{' '}
-            <strong>Start (all)</strong>.
-          </div>
-        </div>
-        <div className="empty-actions">
-          <button type="button" className="btn primary" onClick={onStop}>
-            Go to Manage
-          </button>
-        </div>
+        {noCards ? (
+          <>
+            <h3>No cards yet</h3>
+            <div className="muted" style={{ marginBottom: 16 }}>
+              Add your first word to start memorizing.
+            </div>
+            <div className="empty-actions">
+              <button
+                type="button"
+                className="btn primary btn-inline"
+                onClick={onAddWord}
+              >
+                <Plus size={16} />
+                Add a word
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <h3>Ready to study</h3>
+            <div className="muted" style={{ marginBottom: 16 }}>
+              Start a fresh session, or pick a specific batch or study set in
+              Manage.
+            </div>
+            <div className="empty-actions">
+              <button
+                type="button"
+                className="btn primary"
+                onClick={onStartDefault}
+              >
+                Start studying
+              </button>
+              <button type="button" className="btn" onClick={onStop}>
+                Go to Manage
+              </button>
+            </div>
+          </>
+        )}
       </div>
     );
   }
@@ -194,7 +225,12 @@ export function StudyMode({
             <div
               className={`flash ${hasConjugationsBack ? 'flash-dense' : ''}`}
               role="button"
-              onClick={onToggleBack}
+              style={{
+                transform: swipe.dx ? `translateX(${swipe.dx}px)` : undefined,
+                transition: swipe.dragging ? 'none' : 'transform 0.2s ease',
+                touchAction: 'pan-y',
+              }}
+              {...swipe.handlers}
             >
               {showBack ? backText : frontText}
             </div>

@@ -31,12 +31,28 @@ export function useFlashcards() {
     hasSeededRef.current = true;
   }, [cards.length]);
 
+  // Mirror the latest cards in a ref so addCard can report synchronously
+  // whether a word is a duplicate without closing over stale state.
+  const cardsRef = useRef(cards);
+  useEffect(() => {
+    cardsRef.current = cards;
+  }, [cards]);
+
   const addCard = useCallback((
     front: string,
     back: string,
     type: WordType,
     examplesText: string
-  ) => {
+  ): boolean => {
+    const isDuplicate = (list: Card[]) =>
+      list.some(
+        (c) =>
+          c.front.toLowerCase() === front.toLowerCase() &&
+          c.back.toLowerCase() === back.toLowerCase()
+      );
+
+    if (isDuplicate(cardsRef.current)) return false;
+
     const examples = examplesText
       .split('\n')
       .map((l) => l.trim())
@@ -47,12 +63,7 @@ export function useFlashcards() {
       });
 
     setCards((prev) => {
-      const exists = prev.some(
-        (c) =>
-          c.front.toLowerCase() === front.toLowerCase() &&
-          c.back.toLowerCase() === back.toLowerCase()
-      );
-      if (exists) return prev;
+      if (isDuplicate(prev)) return prev; // guard against a fast double-add
 
       return [
         {
@@ -66,6 +77,8 @@ export function useFlashcards() {
         ...prev,
       ];
     });
+
+    return true;
   }, []);
 
   const removeCard = useCallback((id: string) => {
