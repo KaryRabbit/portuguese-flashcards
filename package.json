@@ -2,7 +2,7 @@
   "name": "portuguese-flashcards",
   "private": true,
   "homepage": "https://KaryRabbit.github.io/portuguese-flashcards",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Modern flashcard application for learning European Portuguese",
   "type": "module",
   "scripts": {
