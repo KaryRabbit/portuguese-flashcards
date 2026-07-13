@@ -1,9 +1,16 @@
+import { Capacitor } from '@capacitor/core';
 import type { PaginationState } from '@tanstack/react-table';
+import { Plus } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import type { Card, Conjugations, StudyGroup, WordType } from '../flashcard-types';
 import { BATCH_KEY, uid } from '../utils/storage';
 import { loadSampleWords } from '../utils/sampleWords';
 import { CardTable } from './CardTable';
+
+// CSV import/export is a desktop/web power feature. On native (iOS/Android)
+// WebViews the blob-download export does not work and users rarely have a CSV
+// on-device, so we hide it there.
+const IS_NATIVE = Capacitor.isNativePlatform();
 
 type ConjugationGroup = {
   eu: string;
@@ -22,12 +29,7 @@ interface ManageModeProps {
   onToggleSelect: (id: string) => void;
   onToggleSelectAll: () => void;
   onRemove: (id: string) => void;
-  onAdd: (
-    front: string,
-    back: string,
-    type: WordType,
-    examples: string
-  ) => void;
+  onOpenAddWord: () => void;
   onImportCards: (cards: Card[]) => void;
   onExportCSV: () => void;
   onExportUnknownCSV: () => void;
@@ -47,7 +49,7 @@ export function ManageMode({
   onToggleSelect,
   onToggleSelectAll,
   onRemove,
-  onAdd,
+  onOpenAddWord,
   onImportCards,
   onExportCSV,
   onExportUnknownCSV,
@@ -58,10 +60,6 @@ export function ManageMode({
   onDeleteGroup,
   setHasImported,
 }: ManageModeProps) {
-  const [en, setEn] = useState('');
-  const [pt, setPt] = useState('');
-  const [type, setType] = useState<WordType>('noun');
-  const [examplesText, setExamplesText] = useState('');
   const [q, setQ] = useState('');
   const [filterType, setFilterType] = useState<WordType | 'all'>('all');
   const [onlySelected, setOnlySelected] = useState(false);
@@ -145,21 +143,10 @@ export function ManageMode({
     }
   }, [filtered.length, pagination.pageSize, pagination.pageIndex]);
 
-  const handleAdd = () => {
-    const front = en.trim();
-    const back = pt.trim();
-    if (!front || !back) return;
-
-    onAdd(front, back, type, examplesText);
-    setEn('');
-    setPt('');
-    setExamplesText('');
-  };
-
   const handleLoadSampleWords = () => {
     if (cards.length > 0) {
       const confirmed = confirm(
-        'This will add 2,251 curated European Portuguese words to your collection. Continue?'
+        'This will add the full set of curated European Portuguese words to your collection. Continue?'
       );
       if (!confirmed) return;
     }
@@ -311,154 +298,21 @@ export function ManageMode({
 
   return (
     <div className="card">
-      <h3>Add Card</h3>
-      <div className="add-card-grid">
-        <div className="input-field">
-          <label className="muted">English</label>
-          <input
-            value={en}
-            onChange={(e) => setEn(e.target.value)}
-            placeholder="e.g., house"
-            className="input"
-          />
-        </div>
-        <div className="input-field">
-          <label className="muted">Portuguese (EU)</label>
-          <input
-            value={pt}
-            onChange={(e) => setPt(e.target.value)}
-            placeholder="casa"
-            className="input"
-          />
-        </div>
-
-        <div className="input-field">
-          <label className="muted">Type</label>
-          <select
-            value={type}
-            onChange={(e) => setType(e.target.value as WordType)}
-            className="input"
-          >
-            <option value="noun">Noun</option>
-            <option value="verb-regular">Verb (Regular)</option>
-            <option value="verb-irregular">Verb (Irregular)</option>
-            <option value="adjective">Adjective</option>
-            <option value="adverb">Adverb</option>
-            <option value="expression">Expression</option>
-            <option value="phrase">Phrase</option>
-            <option value="other">Other</option>
-          </select>
-        </div>
-
-        <div style={{ gridColumn: '1 / span 2' }} className="input-field">
-          <label className="muted">Examples (one per line: EN | PT)</label>
-          <textarea
-            value={examplesText}
-            onChange={(e) => setExamplesText(e.target.value)}
-            rows={3}
-            placeholder="I like the house | Eu gosto da casa"
-            className="input"
-          />
-        </div>
-      </div>
-
-      <div className="manage-actions">
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".csv"
-          onChange={importFile}
-          style={{ display: 'none' }}
-        />
-        <div className="tooltip-wrapper">
-          <span className="tooltip-icon">i</span>
-          <button
-            type="button"
-            className="btn"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isImporting}
-          >
-            {isImporting ? 'Importing…' : 'Import'}
-          </button>
-          <div className="tooltip-content">
-            <strong>CSV format (one card per line):</strong>
-            <br />
-            <code>
-              english,portuguese,type,example_en,example_pt,
-              present,past_perfeito,past_imperfeito,future
-            </code>
-            <br />
-            <br />
-            <strong>Rules:</strong>
-            <ul>
-              <li>One CSV line = one card</li>
-              <li>Columns are separated by commas (,)</li>
-              <li>
-                Conjugation columns are <b>optional</b> and can be provided
-                partially
-              </li>
-              <li>
-                Each conjugation column must contain exactly 6 forms separated
-                by <b>|</b>
-              </li>
-            </ul>
-            <em>
-              You may provide only one conjugation column (e.g. present only).
-              Missing conjugation columns are ignored.
-            </em>
-            <strong>Person order:</strong>
-            <br />
-            eu | tu | ele/ela/você | nós | vós | eles/elas/vocês
-            <br />
-            <br />
-            <strong>Example (single CSV line):</strong>
-            <br />
-            <code
-              style={{
-                fontSize: '0.75rem',
-                display: 'block',
-                whiteSpace: 'pre-wrap',
-                wordBreak: 'break-word',
-              }}
-            >
-              to be,ser,verb-irregular,I am happy.,Sou
-              feliz.,sou|és|é|somos|sois|são,fui|foste|foi|fomos|fostes|foram,era|eras|era|éramos|éreis|eram,serei|serás|será|seremos|sereis|serão
-            </code>
+      <div className="manage-add-header">
+        <div>
+          <h3 style={{ margin: 0 }}>Your words</h3>
+          <div className="muted small-text">
+            {cards.length} card{cards.length !== 1 ? 's' : ''} · add your own to
+            memorize alongside the built-in set.
           </div>
         </div>
         <button
           type="button"
-          className="btn"
-          onClick={handleLoadSampleWords}
-          disabled={isImporting}
-          title="Load 2,251 curated European Portuguese words"
+          className="btn primary btn-inline"
+          onClick={onOpenAddWord}
         >
-          {isImporting ? 'Loading…' : 'Load Sample Words'}
-        </button>
-        <button
-          type="button"
-          className="btn"
-          onClick={onExportCSV}
-          disabled={isImporting || cards.length === 0}
-        >
-          Export all
-        </button>
-        <button
-          type="button"
-          className="btn"
-          onClick={onExportUnknownCSV}
-          disabled={isImporting || cards.length === 0}
-        >
-          Export unknown only
-        </button>
-
-        <button
-          type="button"
-          className="btn primary"
-          onClick={handleAdd}
-          disabled={!en.trim() || !pt.trim() || isImporting}
-        >
-          {isImporting ? 'Please wait…' : 'Add'}
+          <Plus size={16} />
+          Add a word
         </button>
       </div>
 
@@ -523,7 +377,8 @@ export function ManageMode({
         </div>
 
         <div className="batch-controls">
-          <label className="muted small-text" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div className="batch-top-row">
+            <label className="muted small-text" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             Batch size:
             <select
               className="input"
@@ -541,7 +396,7 @@ export function ManageMode({
             </select>
           </label>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <div className="batch-nav">
             <button
               className="btn"
               onClick={() => setBatchIndex((i) => Math.max(0, i - 1))}
@@ -562,8 +417,9 @@ export function ManageMode({
               &gt;
             </button>
           </div>
+          </div>
 
-          <span className="muted small-text">
+          <span className="muted small-text batch-count">
             Cards {batchIndex * batchSize + 1}–{Math.min((batchIndex + 1) * batchSize, studyPool.length)} of {studyPool.length}
           </span>
 
@@ -774,6 +630,105 @@ export function ManageMode({
           No cards yet.
         </div>
       )}
+
+      <details className="advanced-section">
+        <summary>Advanced / Backup</summary>
+        <div className="advanced-body">
+          <button
+            type="button"
+            className="btn"
+            onClick={handleLoadSampleWords}
+            disabled={isImporting}
+            title="Reload the full set of curated European Portuguese words"
+          >
+            {isImporting ? 'Loading…' : 'Load built-in words'}
+          </button>
+
+          {!IS_NATIVE && (
+            <>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".csv"
+                onChange={importFile}
+                style={{ display: 'none' }}
+              />
+              <div className="tooltip-wrapper">
+                <span className="tooltip-icon">i</span>
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isImporting}
+                >
+                  {isImporting ? 'Importing…' : 'Import CSV'}
+                </button>
+                <div className="tooltip-content">
+                  <strong>CSV format (one card per line):</strong>
+                  <br />
+                  <code>
+                    english,portuguese,type,example_en,example_pt,
+                    present,past_perfeito,past_imperfeito,future
+                  </code>
+                  <br />
+                  <br />
+                  <strong>Rules:</strong>
+                  <ul>
+                    <li>One CSV line = one card</li>
+                    <li>Columns are separated by commas (,)</li>
+                    <li>
+                      Conjugation columns are <b>optional</b> and can be provided
+                      partially
+                    </li>
+                    <li>
+                      Each conjugation column must contain exactly 6 forms
+                      separated by <b>|</b>
+                    </li>
+                  </ul>
+                  <em>
+                    You may provide only one conjugation column (e.g. present
+                    only). Missing conjugation columns are ignored.
+                  </em>
+                  <strong>Person order:</strong>
+                  <br />
+                  eu | tu | ele/ela/você | nós | vós | eles/elas/vocês
+                  <br />
+                  <br />
+                  <strong>Example (single CSV line):</strong>
+                  <br />
+                  <code
+                    style={{
+                      fontSize: '0.75rem',
+                      display: 'block',
+                      whiteSpace: 'pre-wrap',
+                      wordBreak: 'break-word',
+                    }}
+                  >
+                    to be,ser,verb-irregular,I am happy.,Sou
+                    feliz.,sou|és|é|somos|sois|são,fui|foste|foi|fomos|fostes|foram,era|eras|era|éramos|éreis|eram,serei|serás|será|seremos|sereis|serão
+                  </code>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="btn"
+                onClick={onExportCSV}
+                disabled={isImporting || cards.length === 0}
+              >
+                Export all
+              </button>
+              <button
+                type="button"
+                className="btn"
+                onClick={onExportUnknownCSV}
+                disabled={isImporting || cards.length === 0}
+              >
+                Export unknown only
+              </button>
+            </>
+          )}
+        </div>
+      </details>
     </div>
   );
 }
