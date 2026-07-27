@@ -15,7 +15,8 @@
 }
 html,
 body {
-  overflow-x: hidden;
+  /* clip (not hidden) so descendants can still use position: sticky */
+  overflow-x: clip;
   width: 100%;
   max-width: 100%;
 }
@@ -30,7 +31,7 @@ body {
 
 #root {
   min-height: 100dvh;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 .container {
@@ -454,6 +455,164 @@ body {
   gap: 8px;
   flex-wrap: wrap;
   margin-top: 16px;
+}
+
+.study-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.study-feed-toolbar {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 10;
+  padding: 0.5rem 0 0.6rem;
+  background: var(--bg);
+}
+
+.study-feed-toolbar-row,
+.study-feed-card-header,
+.study-card-meta,
+.study-feed-actions {
+  display: flex;
+  align-items: center;
+}
+
+.study-feed-toolbar-row,
+.study-feed-card-header {
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.study-feed-progress {
+  height: 5px;
+  margin-top: 0.6rem;
+  border-radius: 999px;
+  background: var(--br);
+  overflow: hidden;
+}
+
+.study-feed-progress > div {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+  transition: width 0.3s ease;
+}
+
+.study-feed-actions,
+.study-card-meta {
+  gap: 0.5rem;
+}
+
+.study-feed-hint {
+  margin: 0.5rem 0 0;
+  font-size: 0.85rem;
+}
+
+.study-feed-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.study-feed-card {
+  /* Clear the sticky toolbar when a card is scrolled into view. */
+  scroll-margin-top: calc(4.5rem + env(safe-area-inset-top, 0px));
+}
+
+.study-pill-learning {
+  color: var(--accent-2);
+  border-color: color-mix(in srgb, var(--accent-2) 45%, transparent);
+}
+
+.study-feed-done {
+  text-align: center;
+}
+
+.study-feed-done h3 {
+  margin-top: 0;
+}
+
+.example-line {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.example-line .example-speak {
+  border: none;
+  padding: 4px;
+  min-width: auto;
+}
+
+.study-session-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.study-card-face {
+  display: flex;
+  width: 100%;
+  min-height: 9rem;
+  align-items: center;
+  justify-content: center;
+  margin: 0.75rem 0 0;
+  padding: 1rem;
+  border: 1px solid var(--br);
+  border-radius: 0.75rem;
+  background: var(--card-soft);
+  color: var(--t);
+  cursor: pointer;
+  font: inherit;
+  font-size: clamp(1.2rem, 4vw, 1.8rem);
+  text-align: center;
+  word-break: break-word;
+}
+
+.study-card-face[aria-expanded='true'] {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--br));
+  background: color-mix(in srgb, var(--accent) 6%, var(--card-soft));
+}
+
+.study-card-face:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  outline-offset: 3px;
+}
+
+.study-card-meta {
+  justify-content: space-between;
+  margin-top: 0.5rem;
+}
+
+.study-feed-conjugations {
+  margin-top: 1rem;
+  border-top: 1px solid var(--br);
+  padding-top: 0.75rem;
+}
+
+.study-conjugation-section + .study-conjugation-section {
+  margin-top: 1rem;
+}
+
+.study-conjugation-section h4 {
+  margin: 0 0 0.5rem;
+}
+
+.study-conjugation-subsection + .study-conjugation-subsection {
+  margin-top: 0.75rem;
+}
+
+.study-feed-conjugations .study-conjugation-grid {
+  grid-template-columns: 1fr;
+}
+
+.study-conjugation-pair {
+  display: grid;
+  grid-template-columns: minmax(88px, auto) minmax(0, 1fr);
+  column-gap: 10px;
 }
 
 .study-jump {

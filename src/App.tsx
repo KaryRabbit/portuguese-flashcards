@@ -23,7 +23,6 @@ export function App() {
   );
   const [direction, setDirection] = useState<'en-pt' | 'pt-en'>('en-pt');
   const [hasImported, setHasImported] = useState(false);
-  const [gotoIndex, setGotoIndex] = useState<number | null>(null);
   const [addOpen, setAddOpen] = useState(false);
 
   const { cards, addCard, removeCard, importCards, clearAll } = useFlashcards();
@@ -36,21 +35,12 @@ export function App() {
     isSessionRestored,
     selectedIds,
     setSelectedIds,
-    idx,
-    showBack,
-    setShowBack,
-    active,
     toggleSelect,
     regenerateSession,
     startSession,
     clearSession,
     removeFromSession,
-    next,
-    prev,
-    reset,
-    resetProgress,
     setSession,
-    goTo,
   } = useSession(cards, hasImported);
 
   // Build a fresh, shuffled, bite-sized session from the cards the user is
@@ -82,20 +72,13 @@ export function App() {
 
   const wordOfTheDay = getWordOfTheDay(cards);
 
-  const isActiveSelected = active ? selectedIds.has(active.id) : false;
-  const isActiveKnown = active ? knownIds.has(active.id) : false;
-  const knownInSession = session.filter((c) => knownIds.has(c.id)).length;
-
-  const handleMarkKnown = () => {
-    if (!active) return;
-    markKnown(active.id);
-    removeFromSession(active.id);
+  const handleMarkKnown = (id: string) => {
+    markKnown(id);
+    removeFromSession(id);
   };
 
-  const handleMarkLearning = () => {
-    if (!active) return;
-    markLearning(active.id);
-    next();
+  const handleMarkLearning = (id: string) => {
+    markLearning(id);
   };
 
   const handleRemove = (id: string) => {
@@ -114,7 +97,6 @@ export function App() {
   const handleClearSelection = () => {
     setSelectedIds(new Set());
     setSession([]);
-    setShowBack(false);
   };
 
   const handleImportCards = (newCards: Card[]) => {
@@ -251,26 +233,6 @@ export function App() {
 
   const handleStop = () => {
     setMode('manage');
-    reset();
-  };
-
-  const handleGoto = () => {
-    if (gotoIndex === null) return;
-
-    const target = Math.max(0, Math.min(gotoIndex - 1, session.length - 1));
-
-    goTo(target);
-    setGotoIndex(null);
-  };
-
-  const handlePrev = () => {
-    setShowBack(false);
-    prev();
-  };
-
-  const handleNext = () => {
-    setShowBack(false);
-    next();
   };
 
   const isStudy = mode === 'study';
@@ -339,7 +301,6 @@ export function App() {
                 value={direction}
                 onChange={(e) => {
                   setDirection(e.target.value as 'en-pt' | 'pt-en');
-                  setShowBack(false);
                 }}
                 className="input"
               >
@@ -388,27 +349,16 @@ export function App() {
 
       {mode === 'study' && (
         <StudyMode
-          active={active}
+          session={session}
           sessionId={sessionId}
-          idx={idx}
-          sessionLength={session.length}
-          showBack={showBack}
           direction={direction}
-          isActiveSelected={isActiveSelected}
-          isActiveKnown={isActiveKnown}
-          onToggleSelect={() => active && toggleSelect(active.id)}
-          onToggleBack={() => setShowBack((s) => !s)}
-          onPrev={handlePrev}
-          onNext={handleNext}
+          selectedIds={selectedIds}
+          knownIds={knownIds}
+          onToggleSelect={toggleSelect}
           onStop={handleStop}
-          gotoIndex={gotoIndex}
-          onInput={setGotoIndex}
-          onGoto={handleGoto}
           onShuffle={() => regenerateSession(true, true)}
-          onResetProgress={resetProgress}
           onMarkKnown={handleMarkKnown}
           onMarkLearning={handleMarkLearning}
-          knownCount={knownInSession}
           cardsCount={cards.length}
           onStartDefault={startDefaultSession}
           onAddWord={() => setAddOpen(true)}
@@ -442,7 +392,9 @@ export function App() {
         Made with ❤️ in React · {cards.length} cards saved
       </footer>
 
-      {mode !== 'conjugations' && (
+      {/* In study mode the feed's sticky toolbar has its own add button, and a
+          fixed FAB would float over the full-width cards. */}
+      {mode === 'manage' && (
         <button
           type="button"
           className="fab"
