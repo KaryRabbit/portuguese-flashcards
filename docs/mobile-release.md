@@ -2,6 +2,10 @@
 
 This project now has a Capacitor shell for publishing the React/Vite app as a native mobile app.
 
+> **Full iOS release walkthrough** (code → simulator → archive → upload → App Store Connect submission) lives in
+> [`.claude/skills/ios-release/SKILL.md`](../.claude/skills/ios-release/SKILL.md).
+> In Claude Code it runs automatically when you ask to "release" or "ship" the app; it also reads fine as a plain checklist.
+
 ## Current Setup
 
 - Web app source stays in `src/`.

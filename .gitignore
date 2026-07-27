@@ -24,6 +24,9 @@ ios/App/App/config.xml
 ios/App/App.xcworkspace/xcuserdata/
 ios/App/App.xcodeproj/xcuserdata/
 skills/
+# ...but keep Claude Code project skills (release runbook etc.) in the repo
+!.claude/skills/
+!.claude/skills/**
 
 # Editor directories and files
 .vscode/*
